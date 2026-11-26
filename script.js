@@ -1,4 +1,4 @@
-/* SJ = kern van de game: voortgang (enkel in geheugen), geluid, confetti, spelregister. */
+/* SJ = kern van de game: voortgang (enkel in geheugen), geluid, confetti, spelregisterr. */
 const SJ = (() => {
   const games = {};
   const state = { xp:0, correct:0, bestCombo:0, medals:[], sound:false };

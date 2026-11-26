@@ -52,16 +52,20 @@ const SJ = (() => {
   function registerGame(key,def){games[key]=def;}
 
   function pick(filter={}){ // helper voor alle spelmodi
-    let list=questions.filter(q=>(!filter.category||q.category===filter.category)&&(!filter.difficulty||q.difficulty===filter.difficulty));
+    const bank = Array.isArray(questions) ? questions : [];
+    let list=bank.filter(q=>(!filter.category||q.category===filter.category)&&(!filter.difficulty||q.difficulty===filter.difficulty));
     return list.map(q=>[Math.random(),q]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]).slice(0,filter.count||list.length);
   }
 
   function init(){
+    // Klikken moet altijd werken, ook als de vragenbank niet geladen is.
+    document.addEventListener("click",e=>{const p=e.target.closest("[data-play]");if(p)return play(p.dataset.play);if(e.target.closest("[data-go=home]")){e.preventDefault();home();}});
+    const bank = Array.isArray(questions) ? questions : [];
+    const cats = Array.isArray(CATEGORIES) ? CATEGORIES : [];
     const modes=[["quiz","🎯","Quiz Arena","Meerkeuze met uitleg per vraag."],["runner","🏃","Faith Runner","Ren, spring en kies de juiste baan."],
       ["memory","🧩","Memory Challenge","Koppel begrippen aan hun betekenis."],["daily","⭐","Daily Challenge","Vijf opdrachten, vijf soorten."],["speed","⚡","Speed Quiz","Zoveel mogelijk binnen de tijd."]];
     $("#modeGrid").innerHTML=modes.map(m=>`<button class="mode ${games[m[0]]?"":"soon"}" data-play="${m[0]}"><span class="ico">${m[1]}</span><h3>${m[2]}</h3><p>${m[3]}</p>${games[m[0]]?"":'<span class="tag">Binnenkort</span>'}</button>`).join("");
-    $("#topicList").innerHTML=CATEGORIES.map(c=>`<span class="topic">${c}<small>${questions.filter(q=>q.category===c).length}</small></span>`).join("");
-    document.addEventListener("click",e=>{const p=e.target.closest("[data-play]");if(p)return play(p.dataset.play);if(e.target.closest("[data-go=home]")){e.preventDefault();home();}});
+    $("#topicList").innerHTML=cats.map(c=>`<span class="topic">${c}<small>${bank.filter(q=>q.category===c).length}</small></span>`).join("");
     $("#soundBtn").onclick=function(){state.sound=!state.sound;this.textContent=state.sound?"🔊":"🔇";this.setAttribute("aria-pressed",state.sound);beep(880);};
     render();
   }

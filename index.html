@@ -63,6 +63,6 @@
 <script src="games/daily.js"></script>
 <script src="games/memory.js"></script>
 <script src="games/runner.js"></script>
-<script>SJ.init();</script>
+<script>(typeof loadQuestions === "function" ? loadQuestions() : Promise.resolve()).then(() => SJ.init());</script>
 </body>
 </html>

@@ -83,6 +83,11 @@
   .rn-ov .rn-best{color:var(--yellow);font-weight:700}
   .rn-ov .rn-stat{font:700 2.6rem "Space Grotesk",sans-serif;color:var(--yellow);margin:8px 0}
   .rn-tip{text-align:center;color:var(--muted);font-size:.75rem;margin-top:9px}
+  .rn-energy-top .lni{font-size:13px;vertical-align:-1px;margin-right:3px}
+  .rn-keys .lni{font-size:14px;vertical-align:0}
+  .rn-best .lni,.rn-m .lni{font-size:1em;vertical-align:-.12em;margin-right:4px}
+  .rn-badge .lni{font-size:.9em;vertical-align:-.1em;margin-right:3px}
+  .rn-tip .lni{font-size:1em;vertical-align:-.12em}
   @media (prefers-reduced-motion:reduce){.rn-badge,.rn-m{animation:none}}`;
 
   function ensureCss() {
@@ -100,7 +105,7 @@
     root.innerHTML = `<div class="rn">
       <div class="rn-hud">
         <div class="rn-score"><span>SCORE</span><strong id="rn-s">0</strong></div>
-        <div class="rn-energy"><div class="rn-energy-top"><span>⚡ ENERGIE</span><span id="rn-ep">100%</span></div><div class="bar rn-bar"><i id="rn-e" style="width:100%"></i></div></div>
+        <div class="rn-energy"><div class="rn-energy-top"><span>${SJ.ico("bolt-2")} ENERGIE</span><span id="rn-ep">100%</span></div><div class="bar rn-bar"><i id="rn-e" style="width:100%"></i></div></div>
         <button class="icon-btn rn-pause" id="rn-p" aria-label="Pauze">⏸</button>
       </div>
       <div class="rn-wrap">
@@ -110,7 +115,7 @@
         <div id="rn-m" class="rn-m"></div>
         <div id="rn-ov" class="rn-ov"></div>
       </div>
-      <p class="rn-tip">Pijltjes / A D om te wisselen · ↑ of spatie om te springen · veeg op touch</p>
+      <p class="rn-tip">Pijltjes / A D om te wisselen · ${SJ.ico("arrow-upward")} of spatie om te springen · veeg op touch</p>
     </div>`;
     cv = $("#rn-c");
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -142,8 +147,8 @@
   function menu() {
     ov(`<div class="rn-kicker">SJBIBEL GAME</div><h2>FAITH <b>RUNNER</b></h2>
       <p>Ren door de stad, verzamel munten en kies de juiste baan bij elke vraag.</p>
-      <div class="rn-keys"><kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>SPACE</kbd></div>
-      <p><span class="rn-best">🏆 Sessierecord: ${best}</span></p>
+      <div class="rn-keys"><kbd>${SJ.ico("arrow-left")}</kbd><kbd>${SJ.ico("arrow-right")}</kbd><kbd>${SJ.ico("arrow-upward")}</kbd><kbd>SPACE</kbd></div>
+      <p><span class="rn-best">${SJ.ico("trophy-1")} Sessierecord: ${best}</span></p>
       <button class="btn primary" id="go">Start de run</button><button class="btn" id="back">Terug</button>`);
     $("#go").onclick = begin; $("#back").onclick = () => SJ.home();
   }
@@ -229,7 +234,7 @@
   /* --- spelregels --- */
   function hurt() {
     if (S.inv > 0) return;
-    if (S.shield) { S.shield = 0; S.inv = 1; msg("🛡️ Schild gebroken!"); burst(CX, GROUND - 40, "#5fd0e0", 18); sfx.power(); return; }
+    if (S.shield) { S.shield = 0; S.inv = 1; msg(SJ.ico("shield-2") + " Schild gebroken!"); burst(CX, GROUND - 40, "#5fd0e0", 18); sfx.power(); return; }
     S.energy -= 20; S.inv = 1.2; S.shake = .35; sfx.hurt();
     burst(CX, GROUND - 30, "#c0504d", 14);
     if (S.energy <= 0) over();
@@ -249,7 +254,7 @@
       S.score += bonus; S.energy = Math.min(100, S.energy + 15);
       SJ.addXp(5, { right: true, combo: S.streak }); sfx.right();
       label(`+${bonus}  JUIST!`, PX(g.pick - 1, 0), GROUND - 120, "#2e7d63", 22);
-      msg(`✨ Juist! +${bonus} punten${S.streak > 1 ? " · reeks x" + S.streak : ""}`, 1600);
+      msg(`${SJ.ico("spark")} Juist! +${bonus} punten${S.streak > 1 ? " · reeks x" + S.streak : ""}`, 1600);
       burst(CX, GROUND - 100, "#f4c542", 24);
       if (S.streak === 3) SJ.confetti();
     } else {
@@ -300,9 +305,9 @@
       if (!p.got && p.z < 22 && p.z > -22 && Math.abs(S.vx - p.coord) < .48) {
         p.got = true;
         if (p.type === "coin") { S.coins++; S.score += 10 * (S.dbl > 0 ? 2 : 1); sfx.coin(); burst(PX(p.coord, 0), GROUND - 50, "#f4c542", 6); }
-        else if (p.type === "shield") { S.shield = 1; msg("🛡️ Schild geactiveerd!"); sfx.power(); }
-        else if (p.type === "life") { S.energy = Math.min(100, S.energy + 25); msg("💚 Energie +25"); sfx.power(); }
-        else { S.dbl = 8; msg("⭐ Dubbele punten (8s)!"); sfx.power(); }
+        else if (p.type === "shield") { S.shield = 1; msg(SJ.ico("shield-2") + " Schild geactiveerd!"); sfx.power(); }
+        else if (p.type === "life") { S.energy = Math.min(100, S.energy + 25); msg(SJ.ico("heart") + " Energie +25"); sfx.power(); }
+        else { S.dbl = 8; msg(SJ.ico("star-fat") + " Dubbele punten (8s)!"); sfx.power(); }
       }
     }
     S.picks = S.picks.filter(p => p.z > -140 && !p.got);
@@ -323,9 +328,9 @@
     $("#rn-e").style.width = Math.max(0, S.energy) + "%";
     $("#rn-ep").textContent = Math.max(0, Math.ceil(S.energy)) + "%";
     let b = "";
-    if (S.streak > 1) b += `<span class="rn-badge combo">🔥 x${S.streak}</span>`;
-    if (S.shield) b += `<span class="rn-badge shield">🛡️ Schild</span>`;
-    if (S.dbl > 0) b += `<span class="rn-badge star">⭐ ${Math.ceil(S.dbl)}s</span>`;
+    if (S.streak > 1) b += `<span class="rn-badge combo">${SJ.ico("fireworks")} x${S.streak}</span>`;
+    if (S.shield) b += `<span class="rn-badge shield">${SJ.ico("shield-2")} Schild</span>`;
+    if (S.dbl > 0) b += `<span class="rn-badge star">${SJ.ico("star-fat")} ${Math.ceil(S.dbl)}s</span>`;
     if (b !== S.lastBadges) { $("#rn-badges").innerHTML = b; S.lastBadges = b; }
   }
   const loop = now => {
@@ -344,7 +349,7 @@
     sfx.wrong();
     ov(`<div class="rn-kicker">RUN AFGELOPEN</div><h2>Game <b>over</b></h2>
       <div class="rn-stat">${sc}</div>
-      <p>${isBest ? "🏆 Nieuw sessierecord!" : "🏆 Record: " + best}<br>${S.correct} juiste antwoorden · ${S.coins} munten</p>
+      <p>${isBest ? `${SJ.ico("trophy-1")} Nieuw sessierecord!` : `${SJ.ico("trophy-1")} Record: ${best}`}<br>${S.correct} juiste antwoorden · ${S.coins} munten</p>
       <button class="btn primary" id="again">Opnieuw</button><button class="btn" id="home">Startpagina</button>`);
     $("#again").onclick = begin; $("#home").onclick = () => SJ.home();
   }
@@ -364,6 +369,30 @@
       i ? c.lineTo(px, py) : c.moveTo(px, py);
     }
     c.closePath();
+  }
+  /* Iconen in de canvas worden als lijnen getekend, niet als tekstglyfen. */
+  function crossMark(x, y, r, color, w) {
+    c.strokeStyle = color; c.lineWidth = w; c.lineCap = "round";
+    c.beginPath(); c.moveTo(x, y - r); c.lineTo(x, y + r);
+    c.moveTo(x - r * .62, y - r * .22); c.lineTo(x + r * .62, y - r * .22); c.stroke();
+  }
+  function shieldMark(x, y, r, color, w) {
+    c.strokeStyle = color; c.lineWidth = w; c.lineCap = "round"; c.lineJoin = "round";
+    c.beginPath(); c.moveTo(x, y - r); c.lineTo(x + r * .85, y - r * .5);
+    c.lineTo(x + r * .85, y + r * .18);
+    c.quadraticCurveTo(x + r * .85, y + r * .72, x, y + r);
+    c.quadraticCurveTo(x - r * .85, y + r * .72, x - r * .85, y + r * .18);
+    c.lineTo(x - r * .85, y - r * .5); c.closePath(); c.stroke();
+  }
+  function checkMark(x, y, r, color, w) {
+    c.strokeStyle = color; c.lineWidth = w; c.lineCap = "round"; c.lineJoin = "round";
+    c.beginPath(); c.moveTo(x - r, y); c.lineTo(x - r * .2, y + r * .7);
+    c.lineTo(x + r, y - r * .8); c.stroke();
+  }
+  function xMark(x, y, r, color, w) {
+    c.strokeStyle = color; c.lineWidth = w; c.lineCap = "round";
+    c.beginPath(); c.moveTo(x - r, y - r); c.lineTo(x + r, y + r);
+    c.moveTo(x + r, y - r); c.lineTo(x - r, y + r); c.stroke();
   }
   function wrap(text, maxW) {
     const lines = []; let cur = "";
@@ -509,11 +538,11 @@
       cg.addColorStop(0, "#fff0a5"); cg.addColorStop(.5, "#f4c542"); cg.addColorStop(1, "#c28615");
       c.beginPath(); c.arc(0, 0, 14 * s, 0, 7); c.fillStyle = cg; c.fill();
       c.strokeStyle = "#fff6c8"; c.lineWidth = 2 * s; c.stroke();
-      c.fillStyle = "#a06e10"; c.font = `700 ${16 * s}px sans-serif`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("✝", 0, 1 * s);
+      crossMark(0, 0, 9 * s, "#a06e10", 2.4 * s);
     } else if (p.type === "shield") {
       c.fillStyle = "rgba(95,208,224,.3)"; c.beginPath(); c.arc(0, 0, 17 * s, 0, 7); c.fill();
       c.strokeStyle = "#5fd0e0"; c.lineWidth = 3 * s; c.stroke();
-      c.fillStyle = "#eaffff"; c.font = `${17 * s}px sans-serif`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("🛡", 0, 0);
+      shieldMark(0, 0, 12 * s, "#eaffff", 2 * s);
     } else if (p.type === "life") {
       c.fillStyle = "#3f806d"; c.beginPath(); c.arc(0, 0, 16 * s, 0, 7); c.fill();
       c.strokeStyle = "#d6f5e4"; c.lineWidth = 2 * s; c.stroke();
@@ -554,8 +583,8 @@
         c.fillStyle = "#172231"; c.font = `700 ${Math.max(11, 13 * s)}px "DM Sans",sans-serif`;
         c.fillText(fitText(o.t, w - 14 * s), x, top + h * .76);
       }
-      if (g.done && o.ok) { c.fillStyle = "#3f806d"; c.font = `700 ${Math.max(14, 20 * s)}px sans-serif`; c.textAlign = "right"; c.fillText("✓", x + w / 2 - 9 * s, top + 13 * s); }
-      if (g.done && i === g.pick && !o.ok) { c.fillStyle = "#c0504d"; c.font = `700 ${Math.max(14, 20 * s)}px sans-serif`; c.textAlign = "right"; c.fillText("✗", x + w / 2 - 9 * s, top + 13 * s); }
+      if (g.done && o.ok) checkMark(x + w / 2 - 16 * s, top + 15 * s, 6 * s, "#3f806d", 2.6 * s);
+      if (g.done && i === g.pick && !o.ok) xMark(x + w / 2 - 16 * s, top + 15 * s, 5 * s, "#c0504d", 2.6 * s);
     });
   }
 

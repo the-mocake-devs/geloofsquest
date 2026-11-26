@@ -57,7 +57,9 @@
   .mm-head .btn{margin-left:auto;padding:9px 15px;border-radius:12px;font-size:.85rem}
   .mm-progress{display:flex;align-items:center;gap:12px;margin-bottom:14px}
   .mm-progress .bar{flex:1}
-  .mm-combo{font:700 .85rem "Space Grotesk",sans-serif;color:#b8860b;min-width:74px;text-align:right}
+  .mm-combo{font:700 .85rem "Space Grotesk",sans-serif;color:#b8860b;min-width:74px;display:flex;align-items:center;justify-content:flex-end;gap:4px}
+  .mm-combo .lni{font-size:16px;vertical-align:0}
+  .mm-mark .lni{font-size:28px;vertical-align:0}
   .mm-wrap{position:relative}
   .mm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px}
   .mm-card{position:relative;aspect-ratio:1/.92;border:0;padding:0;background:none;cursor:pointer;perspective:800px;font:inherit;transition:transform .18s;border-radius:15px}
@@ -146,7 +148,7 @@
     <div class="mm-progress"><div class="bar"><i id="mm-bar" style="width:0%"></i></div><div class="mm-combo" id="mm-combo"></div></div>
     <div class="mm-wrap"><div class="mm-grid" id="mm-grid">
       ${cards.map((c, i) => `<button class="mm-card" data-i="${i}" aria-label="Dichtgeklapte kaart ${i + 1}" aria-pressed="false">
-        <span class="mm-inner"><span class="mm-back"><span class="mm-mark">✝</span><span class="mm-brand">SJBQUEST</span></span>
+        <span class="mm-inner"><span class="mm-back"><span class="mm-mark"><i class="lni lni-plus" aria-hidden="true"></i></span><span class="mm-brand">SJBQUEST</span></span>
         <span class="mm-face"><small>${c.cat}</small><b>${c.text}</b></span></span></button>`).join("")}
     </div><div class="mm-pause" id="mm-pause" hidden><h3>Even rust</h3><p>Je tijd staat stil.</p><button class="btn primary" id="mm-resume">Hervatten</button><button class="btn" id="mm-stop">Stoppen</button></div></div>
     <p class="mm-tip">Pijltjestoetsen navigeren · Enter of spatie klapt een kaart open.</p>`);
@@ -176,7 +178,7 @@
     $("#mm-moves").textContent = S.moves;
     $("#mm-bar").style.width = (S.matched / S.n * 100) + "%";
     const c = $("#mm-combo");
-    c.textContent = S.combo > 1 ? `🔥 combo x${S.combo}` : "";
+    c.innerHTML = S.combo > 1 ? `${SJ.ico("fireworks")} combo x${S.combo}` : "";
   }
   function pop(el, text) {
     if (reduce) return;

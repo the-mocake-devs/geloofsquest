@@ -53,21 +53,17 @@
   .rn-pause{flex:0 0 42px;width:42px;height:42px;border-radius:13px;box-shadow:0 6px 18px rgba(13,41,75,.12)}
   .rn-wrap{position:relative;border-radius:24px;overflow:hidden;box-shadow:0 24px 60px rgba(13,41,75,.28);background:#eaf2fb;border:3px solid #fff}
   #rn-c{display:block;width:100%;height:auto;touch-action:none}
-  .rn-badges{position:absolute;top:132px;right:10px;display:flex;flex-direction:column;gap:6px;align-items:flex-end;pointer-events:none}
+  .rn-badges{position:absolute;bottom:12px;right:10px;display:flex;flex-direction:column;gap:6px;align-items:flex-end;pointer-events:none}
   .rn-badge{font:700 .78rem "DM Sans",sans-serif;padding:5px 10px;border-radius:99px;background:rgba(255,255,255,.92);color:var(--blue-dark);box-shadow:0 4px 14px rgba(13,41,75,.18);animation:rnin .25s ease}
   .rn-badge.combo{background:linear-gradient(135deg,#f4c542,#ffdf7a);color:#6b4a00}
   .rn-badge.shield{background:linear-gradient(135deg,#bdeef5,#e8fbff);color:#125b69}
   .rn-badge.star{background:linear-gradient(135deg,#ffe07a,#fff2bd);color:#7a5b00}
   @keyframes rnin{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
-  .rn-q{position:absolute;top:10px;left:10px;right:10px;background:linear-gradient(135deg,rgba(13,41,75,.97),rgba(32,74,122,.95));color:#fff;padding:10px 12px 12px;border-radius:16px;font:700 .95rem "DM Sans",sans-serif;line-height:1.35;text-align:center;display:none;box-shadow:0 10px 30px rgba(13,41,75,.4);border:1px solid rgba(255,255,255,.16)}
-  .rn-q small{display:block;font:700 .58rem "Space Grotesk",sans-serif;letter-spacing:.2em;color:var(--yellow);margin-bottom:4px}
-  .rn-opts{display:flex;gap:6px;margin-top:9px}
-  .rn-opt{flex:1;min-width:0;display:flex;align-items:flex-start;gap:6px;text-align:left;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.22);border-radius:10px;padding:7px 8px;font:600 .78rem/1.25 "DM Sans",sans-serif;color:#fff}
-  .rn-opt b{flex:0 0 auto;display:inline-grid;place-items:center;width:19px;height:19px;border-radius:6px;background:var(--yellow);color:#3b2a00;font:700 .72rem "Space Grotesk",sans-serif}
-  .rn-opt.ok{border-color:#7fd3a8;background:rgba(63,128,109,.5)}
-  .rn-opt.bad{border-color:#e88c88;background:rgba(192,80,77,.5)}
-  .rn-opt.fade{opacity:.55}
-  .rn-m{position:absolute;left:10px;right:10px;top:38%;background:rgba(255,255,255,.96);border:2px solid var(--yellow);border-radius:16px;padding:10px 12px;text-align:center;display:none;font-size:.88rem;font-weight:700;color:var(--blue-dark);box-shadow:0 10px 30px rgba(13,41,75,.2);animation:rnin .2s ease}
+  .rn-m .rn-qhead{display:block;font:700 .58rem "Space Grotesk",sans-serif;letter-spacing:.18em;color:var(--blue);margin-bottom:4px}
+  .rn-m .rn-opts{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+  .rn-m .rn-opt{flex:1 1 30%;min-width:0;display:flex;align-items:center;gap:5px;text-align:left;background:var(--blue-light);border-radius:9px;padding:6px;font:600 .75rem/1.2 "DM Sans",sans-serif;color:var(--blue-dark)}
+  .rn-m .rn-opt b{flex:0 0 auto;display:grid;place-items:center;width:18px;height:18px;border-radius:5px;background:var(--yellow);color:#3b2a00;font:700 .68rem "Space Grotesk",sans-serif}
+  .rn-m{position:absolute;left:10px;right:10px;top:8px;background:rgba(255,255,255,.96);border:2px solid var(--yellow);border-radius:16px;padding:10px 12px;text-align:center;display:none;font-size:.88rem;font-weight:700;color:var(--blue-dark);box-shadow:0 10px 30px rgba(13,41,75,.2);animation:rnin .2s ease}
   .rn-ov{position:absolute;inset:0;background:linear-gradient(160deg,rgba(10,30,56,.93),rgba(21,60,107,.9));display:flex;align-items:center;justify-content:center;padding:22px;text-align:center;color:#fff;backdrop-filter:blur(4px)}
   .rn-ov>div{max-width:330px}
   .rn-ov h2{font:700 2.1rem "Space Grotesk",sans-serif;color:#fff;margin-bottom:6px;letter-spacing:-.02em}
@@ -110,7 +106,6 @@
       </div>
       <div class="rn-wrap">
         <canvas id="rn-c"></canvas>
-        <div id="rn-q" class="rn-q"></div>
         <div id="rn-badges" class="rn-badges"></div>
         <div id="rn-m" class="rn-m"></div>
         <div id="rn-ov" class="rn-ov"></div>
@@ -161,7 +156,7 @@
       obs: [], picks: [], gate: null, spawn: 190, qt: 8,
       parts: [], labels: [], lastBadges: "", train: 0
     };
-    ov(null); $("#rn-q").style.display = "none"; $("#rn-m").style.display = "none";
+    ov(null); $("#rn-m").style.display = "none";
     paused = false; running = true; last = performance.now();
     cancelAnimationFrame(raf); raf = requestAnimationFrame(loop);
     sfx.power();
@@ -215,11 +210,10 @@
     if (!q) { S.qt = 18; return; }
     const wrong = shuffle(q.answers.filter((_, i) => i !== q.correct)).slice(0, 2);
     const opts = shuffle([{ t: q.answers[q.correct], ok: true }, ...wrong.map(t => ({ t, ok: false }))]);
-    S.gate = { z: GATE_Z, opts, q, done: false, pick: -1 };
-    const b = $("#rn-q");
-    b.innerHTML = `<small>KIES JE BAAN — GA NAAR DE JUISTE STROOK</small>${q.question}
-      <div class="rn-opts">${opts.map((o, i) => `<div class="rn-opt" data-o="${i}"><b>${"ABC"[i]}</b><span>${o.t}</span></div>`).join("")}</div>`;
-    b.style.display = "block";
+    // Vaste 7 seconden van spawn tot antwoord, ongeacht de loopsnelheid.
+    S.gate = { z: GATE_Z, speed: (GATE_Z - 14) / 7, opts, q, done: false, pick: -1 };
+    msg(`<span class="rn-qhead">KIES JE STROOK</span><b>${q.question}</b>
+      <div class="rn-opts">${opts.map((o, i) => `<span class="rn-opt"><b>${"ABC"[i]}</b>${o.t}</span>`).join("")}</div>`, 7200);
     sfx.power();
   }
   const burst = (x, y, color, n = 12, type = "dot") => {
@@ -241,13 +235,6 @@
   }
   function resolve(g) {
     g.done = true; g.pick = clamp(Math.round(S.vx) + 1, 0, 2);
-    const opts = $("#rn-q").querySelectorAll(".rn-opt");
-    opts.forEach((el, i) => {
-      if (g.opts[i].ok) el.classList.add("ok");
-      else if (i === g.pick) el.classList.add("bad");
-      else el.classList.add("fade");
-    });
-    setTimeout(() => { const b = $("#rn-q"); if (b) b.style.display = "none"; }, 900);
     if (g.opts[g.pick].ok) {
       S.streak++; S.correct++;
       const bonus = 100 + Math.min(S.streak - 1, 4) * 25;
@@ -314,7 +301,7 @@
 
     const g = S.gate;
     if (g) {
-      g.z -= v;
+      g.z -= g.speed * dt;
       if (!g.done && g.z <= 14) resolve(g);
       if (g.z < -150) { S.gate = null; S.qt = rand(10, 15); S.spawn = 200; }
     }
@@ -342,7 +329,7 @@
 
   function over() {
     running = false; cancelAnimationFrame(raf); draw();
-    $("#rn-q").style.display = "none"; $("#rn-badges").innerHTML = ""; S.lastBadges = "";
+    $("#rn-badges").innerHTML = ""; S.lastBadges = "";
     const sc = Math.floor(S.score), isBest = sc > best; if (isBest) best = sc;
     SJ.addXp(Math.floor(sc / 20));
     if (isBest && sc > 50) SJ.confetti();
@@ -554,11 +541,6 @@
     c.restore();
   }
 
-  function fitText(txt, maxW) {
-    let t = txt;
-    while (t.length > 1 && c.measureText(t).width > maxW) t = t.slice(0, -2) + "…";
-    return t;
-  }
   function drawGate(g) {
     const s = K(g.z), y = PY(g.z);
     c.fillStyle = "rgba(13,41,75,.16)"; c.beginPath(); c.ellipse(CX, y + 4 * s, 170 * s, 18 * s, 0, 0, 7); c.fill();
@@ -575,14 +557,10 @@
       }
       rr(x - w / 2, top, w, h, 10 * s); c.fillStyle = bg; c.fill();
       c.strokeStyle = border; c.lineWidth = Math.max(2, 3 * s); c.stroke();
-      // groot label: ook op afstand leesbaar
-      c.fillStyle = border; c.font = `700 ${Math.max(14, 28 * s)}px "Space Grotesk",sans-serif`;
+      // Alleen A / B / C op het speelveld — de tekst staat in de toast.
+      c.fillStyle = border; c.font = `700 ${Math.max(18, 34 * s)}px "Space Grotesk",sans-serif`;
       c.textAlign = "center"; c.textBaseline = "middle";
-      c.fillText("ABC"[i], x, top + h * .38);
-      if (s > .42) {
-        c.fillStyle = "#172231"; c.font = `700 ${Math.max(11, 13 * s)}px "DM Sans",sans-serif`;
-        c.fillText(fitText(o.t, w - 14 * s), x, top + h * .76);
-      }
+      c.fillText("ABC"[i], x, top + h * .5);
       if (g.done && o.ok) checkMark(x + w / 2 - 16 * s, top + 15 * s, 6 * s, "#3f806d", 2.6 * s);
       if (g.done && i === g.pick && !o.ok) xMark(x + w / 2 - 16 * s, top + 15 * s, 5 * s, "#c0504d", 2.6 * s);
     });

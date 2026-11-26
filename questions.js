@@ -1,14 +1,7 @@
-/* ============================================================
-   VRAGENBANK — ingebouwde vragen + uitbreiding uit questionsdata.json
-   ------------------------------------------------------------
-   Dit is een gewoon script (geen module): geen top-level await.
-   loadQuestions() haalt de JSON op en wordt door index.html
-   afgewacht vóór SJ.init().
-   ============================================================ */
+
 const CATEGORIES = ["Sacramenten","Bijbel","Jezus","Feesten","Tien geboden","Parabels","Symbolen","Wereldgodsdiensten",
   "Godsdiensten","Christendom","Levensbeschouwingen","Islam","Hindoeïsme en boeddhisme","Algemene kennis"];
 
-/* Fallback als de JSON niet geladen kan worden (bijv. via file:// of offline). */
 const BUILTIN_QUESTIONS = [
   {id:1, category:"Sacramenten", difficulty:"easy", question:"Hoeveel sacramenten kent de katholieke Kerk?", answers:["5","7","9","12"], correct:1, explanation:"De katholieke Kerk kent zeven sacramenten."},
   {id:2, category:"Sacramenten", difficulty:"easy", question:"Welk sacrament hoort bij de eerste communie?", answers:["Doopsel","Eucharistie","Vormsel","Ziekenzalving"], correct:1, explanation:"Bij de eerste communie ontvang je voor het eerst de Eucharistie."},
@@ -26,8 +19,6 @@ let questions = BUILTIN_QUESTIONS.slice();
 
 const shuffle = a => a.map(x => [Math.random(), x]).sort((p, q) => p[0] - q[0]).map(x => x[1]);
 
-/* Zet de JSON-vragen (categorie / vraag / antwoord) om naar het
-   meerkeuzeformaat dat de spelmodi verwachten. */
 function convertQuestions(data) {
   const byCat = {};
   data.forEach(q => {
@@ -58,6 +49,5 @@ async function loadQuestions() {
     const data = await res.json();
     if (Array.isArray(data) && data.length) questions = convertQuestions(data);
   } catch (e) {
-    /* Geen JSON beschikbaar: de ingebouwde vragen blijven bruikbaar. */
   }
 }

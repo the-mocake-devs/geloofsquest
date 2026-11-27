@@ -106,7 +106,7 @@ async function callback(req, url, env) {
 
   const res = await fetch(`${AUTH}/${env.MICROSOFT_TENANT}/oauth2/v2.0/token`, {
     method: "POST",
-    headers: { "content-type": "application/x-www-form-urlencoded" },
+    headers: { "content-type": "application/x-www-form-urlencoded", Origin: url.origin },
     body: new URLSearchParams({
       client_id: env.MICROSOFT_CLIENT_ID,
       grant_type: "authorization_code",

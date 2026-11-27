@@ -4,9 +4,9 @@ const SESSION_DAYS = 7;
 let jwksCache = { at: 0, keys: [] };
 
 const json = (data, status = 200, headers = {}) => new Response(JSON.stringify(data), {
-  status, headers: { "content-type": "application/json; charset=utf-8", ...headers }
+  status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", ...headers }
 });
-const redirect = (url, headers = {}) => new Response(null, { status: 302, headers: { Location: url, ...headers } });
+const redirect = (url, headers = {}) => new Response(null, { status: 302, headers: { Location: url, "cache-control": "no-store", ...headers } });
 const safeParse = (s, fallback) => { try { return JSON.parse(s); } catch { return fallback; } };
 
 const b64url = bytes => btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");

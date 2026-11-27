@@ -30,7 +30,7 @@ const SJ = (() => {
   }
   async function loadSession(){
     try{
-      const r = await fetch("/api/session",{credentials:"same-origin"});
+      const r = await fetch("/api/session?t=" + Date.now(),{credentials:"same-origin"});
       const d = await r.json();
       state.user = d.user || null;
       if(state.user){

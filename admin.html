@@ -44,7 +44,7 @@ const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt
 
 async function load() {
   let s;
-  try { s = await (await fetch("/api/session", {credentials:"same-origin"})).json(); }
+  try { s = await (await fetch("/api/session?t=" + Date.now(), {credentials:"same-origin"})).json(); }
   catch { $("#rows").innerHTML = '<p>API niet beschikbaar.</p>'; return; }
   if (!s.user) {
     $("#rows").innerHTML = '<p>Je bent niet ingelogd. <a class="btn primary" href="/auth/login?return=/admin.html">Inloggen met Microsoft</a></p>';

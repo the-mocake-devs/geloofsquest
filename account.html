@@ -49,7 +49,7 @@ function showAvatar(src) {
   $("#pfp").innerHTML = src ? `<img src="${src}" alt="Profielfoto">` : '<i class="lni lni-user-4"></i>';
 }
 async function load() {
-  const r = await fetch("/api/session", {credentials:"same-origin"});
+  const r = await fetch("/api/session?t=" + Date.now(), {credentials:"same-origin"});
   const d = await r.json();
   if (!d.user) { $("#title").textContent = "Niet ingelogd"; $("#mail").innerHTML = '<a class="btn primary" href="/auth/login?return=/account.html">Inloggen met Microsoft</a>'; return; }
   email = d.user.email;

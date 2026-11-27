@@ -12,6 +12,14 @@ h1,h2,h3{font-family:"Space Grotesk","DM Sans",sans-serif;color:var(--blue-dark)
 .icon-btn{border:1px solid var(--border);background:#fff;border-radius:12px;width:40px;height:40px;cursor:pointer;font-size:1.1rem}
 .icon-btn.active{background:var(--blue-light);border-color:var(--green)}
 [hidden]{display:none!important}
+.account{position:relative}
+.account-menu{position:absolute;right:0;top:48px;z-index:40;width:210px;background:#fff;border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);padding:8px;display:flex;flex-direction:column;gap:4px}
+.account-head{padding:8px 10px;border-bottom:1px solid var(--border);margin-bottom:4px;font-size:.8rem;color:var(--muted);word-break:break-word}
+.account-head b{display:block;color:var(--blue-dark);font-size:.9rem}
+.account-menu button,.account-menu a{text-align:left;padding:9px 10px;border:0;border-radius:10px;background:none;font:600 .85rem "DM Sans",sans-serif;color:var(--blue-dark);cursor:pointer;text-decoration:none}
+.account-menu button:hover,.account-menu a:hover{background:var(--blue-light)}
+#accountFace{display:grid;place-items:center}
+#accountFace img{width:22px;height:22px;border-radius:50%;object-fit:cover;display:block}
 main{max-width:1080px;margin:0 auto;padding:24px clamp(16px,4vw,40px) 60px}
 .screen{display:none}.screen.active{display:block;animation:in .35s ease}
 @keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}

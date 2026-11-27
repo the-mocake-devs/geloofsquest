@@ -23,8 +23,16 @@
   <div class="nav-right">
     <span class="chip" id="navLevel">Niveau 1</span>
     <span class="chip xp" id="navXp">0 XP</span>
-    <button class="icon-btn" id="adminBtn" aria-label="Vragen beheren" title="Vragen beheren" hidden><i class="lni lni-settings" aria-hidden="true"></i></button>
-    <button class="icon-btn" id="loginBtn" aria-label="Inloggen met Microsoft" title="Inloggen met Microsoft"><i class="lni lni-user-4" aria-hidden="true"></i></button>
+    <div class="account" id="account">
+      <button class="icon-btn" id="accountBtn" aria-label="Account" title="Account" aria-expanded="false"><span id="accountFace"><i class="lni lni-user-4" aria-hidden="true"></i></span></button>
+      <div class="account-menu" id="accountMenu" hidden>
+        <div class="account-head" id="accountHead">Niet ingelogd</div>
+        <button data-a="login">Inloggen met Microsoft</button>
+        <button data-a="profile">Account instellingen</button>
+        <a href="/admin.html" data-a="admin" hidden>Vragen beheren</a>
+        <button data-a="logout">Uitloggen</button>
+      </div>
+    </div>
     <button class="icon-btn" id="soundBtn" aria-label="Geluid aan of uit" aria-pressed="false"><i class="lni lni-volume-mute" aria-hidden="true"></i></button>
   </div>
 </header>

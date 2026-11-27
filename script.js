@@ -12,12 +12,21 @@ const SJ = (() => {
   function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(toast.id);toast.id=setTimeout(()=>t.classList.remove("show"),2600);}
 
   /* Account-sync: de API draait op dezelfde origin als de game. */
-  function syncLoginButton(){
-    const b = $("#loginBtn"); if(!b) return;
-    b.title = state.user ? `Ingelogd als ${state.user.name || state.user.email} — klik om uit te loggen` : "Inloggen met Microsoft";
-    b.classList.toggle("active", !!state.user);
-    const admin = $("#adminBtn");
-    if(admin) admin.hidden = state.user?.role !== "admin";
+  function syncAccountMenu(){
+    const face = $("#accountFace"), head = $("#accountHead"), menu = $("#accountMenu");
+    if(!face || !head || !menu) return;
+    face.innerHTML = state.user?.avatar
+      ? `<img src="${state.user.avatar}" alt="">`
+      : ico(state.user ? "user-4" : "user-4");
+    $("#accountBtn").classList.toggle("active", !!state.user);
+    $("#accountBtn").title = state.user ? `Ingelogd als ${state.user.name}` : "Inloggen met Microsoft";
+    head.innerHTML = state.user
+      ? `<b>${state.user.name || state.user.email}</b>${state.user.email} · ${state.user.role}`
+      : "Niet ingelogd";
+    menu.querySelector('[data-a=login]').hidden = !!state.user;
+    menu.querySelector('[data-a=logout]').hidden = !state.user;
+    menu.querySelector('[data-a=profile]').hidden = !state.user;
+    menu.querySelector('[data-a=admin]').hidden = state.user?.role !== "admin";
   }
   async function loadSession(){
     try{
@@ -31,7 +40,7 @@ const SJ = (() => {
         try{ state.medals = JSON.parse(p.medals || "[]"); }catch{ state.medals = []; }
       }
     }catch(e){ /* geen API beschikbaar: lokaal blijven spelen */ }
-    render(); syncLoginButton();
+    render(); syncAccountMenu();
   }
   function saveProgress(){
     if(!state.user) return;
@@ -100,11 +109,20 @@ const SJ = (() => {
     $("#modeGrid").innerHTML=modes.map(m=>`<button class="mode ${games[m[0]]?"":"soon"}" data-play="${m[0]}"><span class="ico">${ico(m[1])}</span><h3>${m[2]}</h3><p>${m[3]}</p>${games[m[0]]?"":'<span class="tag">Binnenkort</span>'}</button>`).join("");
     $("#topicList").innerHTML=cats.map(c=>`<span class="topic">${c}<small>${bank.filter(q=>q.category===c).length}</small></span>`).join("");
     $("#soundBtn").onclick=function(){state.sound=!state.sound;this.innerHTML=ico(state.sound?"volume-high":"volume-mute");this.setAttribute("aria-pressed",state.sound);beep(880);};
-    $("#loginBtn").onclick = () => {
-      if(state.user){ location.href = "/auth/logout"; }
-      else { location.href = "/auth/login?return=" + encodeURIComponent(location.pathname + location.search); }
+    $("#accountBtn").onclick = () => {
+      const m = $("#accountMenu"); m.hidden = !m.hidden;
+      $("#accountBtn").setAttribute("aria-expanded", String(!m.hidden));
     };
-    if($("#adminBtn")) $("#adminBtn").onclick = () => location.href = "/admin.html";
+    $("#accountMenu").addEventListener("click", e => {
+      const a = e.target.closest("[data-a]"); if(!a) return;
+      const action = a.dataset.a;
+      if(action === "login") location.href = "/auth/login?return=" + encodeURIComponent(location.pathname + location.search);
+      if(action === "logout") location.href = "/auth/logout";
+      if(action === "profile") location.href = "/account.html";
+    });
+    document.addEventListener("click", e => {
+      if(!e.target.closest("#account")) { const m = $("#accountMenu"); if(m){ m.hidden = true; $("#accountBtn").setAttribute("aria-expanded","false"); } }
+    });
     render(); loadSession();
   }
   return {init,registerGame,addXp,toast,beep,confetti,pick,home,ico,state};

@@ -129,7 +129,7 @@ async function callback(req, url, env) {
 
   await env.DB.prepare(`INSERT INTO users (id, microsoft_sub, email, display_name, role, created_at)
     VALUES (?, ?, ?, ?, ?, ?)
-    ON CONFLICT(microsoft_sub) DO UPDATE SET email=excluded.email, display_name=excluded.display_name, role=excluded.role`)
+    ON CONFLICT(microsoft_sub) DO UPDATE SET email=excluded.email, role=excluded.role`)
     .bind(sub, sub, email, name, role, now).run();
 
   const session = await sign({ sub, email, name, role, exp: Math.floor(Date.now() / 1000) + SESSION_DAYS * 86400 },
@@ -203,7 +203,25 @@ export default {
       }
       if (url.pathname === "/api/session") {
         const user = await currentUser(req, env);
-        return json({ user: user ? { name: user.name, email: user.email, role: user.role } : null });
+        if (!user) return json({ user: null });
+        const row = await env.DB.prepare("SELECT display_name, avatar, role FROM users WHERE microsoft_sub=?").bind(user.sub).first();
+        return json({ user: {
+          name: row?.display_name || user.name,
+          email: user.email,
+          role: row?.role || user.role,
+          avatar: row?.avatar || null
+        }});
+      }
+      if (url.pathname === "/api/profile") {
+        const user = await currentUser(req, env);
+        if (!user) return json({ error: "Not signed in" }, 401);
+        if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
+        const b = await req.json();
+        const name = String(b.display_name || "").slice(0, 80) || user.name || user.email;
+        const avatar = b.avatar == null ? null : String(b.avatar);
+        if (avatar && (!/^data:image\//.test(avatar) || avatar.length > 300000)) return json({ error: "Invalid avatar" }, 400);
+        await env.DB.prepare("UPDATE users SET display_name=?, avatar=? WHERE microsoft_sub=?").bind(name, avatar, user.sub).run();
+        return json({ ok: true, display_name: name, avatar });
       }
       if (url.pathname === "/api/progress") return progress(req, env);
       if (url.pathname === "/api/questions") return questions(req, env, url);

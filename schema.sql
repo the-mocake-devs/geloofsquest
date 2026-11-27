@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS users (
   microsoft_sub TEXT UNIQUE NOT NULL,
   email TEXT,
   display_name TEXT,
+  avatar TEXT,
   role TEXT NOT NULL DEFAULT 'player',
   created_at TEXT NOT NULL
 );

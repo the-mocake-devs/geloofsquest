@@ -43,8 +43,19 @@ let rows = [];
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 
 async function load() {
-  const s = await (await fetch("/api/session", {credentials:"same-origin"})).json();
-  if (!s.user || s.user.role !== "admin") { location.href = "/auth/login?return=/admin.html"; return; }
+  let s;
+  try { s = await (await fetch("/api/session", {credentials:"same-origin"})).json(); }
+  catch { $("#rows").innerHTML = '<p>API niet beschikbaar.</p>'; return; }
+  if (!s.user) {
+    $("#rows").innerHTML = '<p>Je bent niet ingelogd. <a class="btn primary" href="/auth/login?return=/admin.html">Inloggen met Microsoft</a></p>';
+    return;
+  }
+  if (s.user.role !== "admin") {
+    $("#who").textContent = s.user.name || s.user.email;
+    $("#rows").innerHTML = `<p>Geen admin-toegang voor <b>${esc(s.user.email)}</b>. Vraag de eigenaar om je toe te voegen aan ADMIN_EMAILS.</p>
+      <p><a class="btn" href="/auth/logout">Uitloggen</a></p>`;
+    return;
+  }
   $("#who").textContent = s.user.name || s.user.email;
   rows = await (await fetch("/api/questions")).json();
   render();

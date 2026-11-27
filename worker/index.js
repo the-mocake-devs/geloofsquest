@@ -6,7 +6,12 @@ let jwksCache = { at: 0, keys: [] };
 const json = (data, status = 200, headers = {}) => new Response(JSON.stringify(data), {
   status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", ...headers }
 });
-const redirect = (url, headers = {}) => new Response(null, { status: 302, headers: { Location: url, "cache-control": "no-store", ...headers } });
+const redirect = (url, headers = {}) => {
+  const h = new Headers(headers);
+  h.set("Location", url);
+  if (!h.has("cache-control")) h.set("cache-control", "no-store");
+  return new Response(null, { status: 302, headers: h });
+};
 const safeParse = (s, fallback) => { try { return JSON.parse(s); } catch { return fallback; } };
 
 const b64url = bytes => btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -134,12 +139,12 @@ async function callback(req, url, env) {
 
   const session = await sign({ sub, email, name, role, exp: Math.floor(Date.now() / 1000) + SESSION_DAYS * 86400 },
     env.SESSION_SECRET || (env.MICROSOFT_CLIENT_ID + "-dev"));
-  return redirect(o.r || "/", {
-    "set-cookie": [
-      setCookie("sq_session", session, SESSION_DAYS * 86400, req),
-      setCookie("oauth", "", 0, req)
-    ].join(", ")
-  });
+  const headers = new Headers();
+  headers.set("Location", o.r || "/");
+  headers.set("cache-control", "no-store");
+  headers.append("Set-Cookie", setCookie("sq_session", session, SESSION_DAYS * 86400, req));
+  headers.append("Set-Cookie", setCookie("oauth", "", 0, req));
+  return new Response(null, { status: 302, headers });
 }
 
 async function progress(req, env) {

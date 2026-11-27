@@ -3,8 +3,9 @@
 <title>GeloofsQuest – De Verloren Atlas</title><link rel="stylesheet" href="style.css"></head>
 <body>
 <header class="top"><b class="logo">Geloofs<span>Quest</span></b>
-  <div class="hud"><span class="chip" id="hTrust">🤝 0</span><span class="chip y" id="hXp">⭐ 0 XP</span><button class="chip" id="hJ">📖 Dagboek</button></div></header>
-<main><div id="stage" class="stage w0"><div id="view"></div></div>
-<aside id="journal" hidden><h3>Dagboek</h3><div id="jList"></div><button class="btn" id="jClose">Sluiten</button></aside></main>
-<script src="story.js"></script><script src="engine.js"></script>
+  <div class="hud"><span class="chip" id="hSt">🪨 0/4</span><span class="chip y" id="hXp">⭐ 0 XP</span></div></header>
+<main><div class="wrap"><canvas id="cv" width="640" height="420"></canvas><div id="ov"><div class="box" id="mini"></div></div></div>
+<p class="muted">Loop met pijltjes of WASD, of tik en sleep op je scherm. Stap op een gloeiende deur om te spelen.</p></main>
+<div id="toast"></div><canvas id="cf"></canvas>
+<script src="world.js"></script><script src="game.js"></script>
 </body></html>

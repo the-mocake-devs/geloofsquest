@@ -1,7 +1,8 @@
 /* SJ = kern van de game: voortgang (enkel in geheugen), geluid, confetti, spelregisterr. */
 const SJ = (() => {
   const games = {};
-  const state = { xp:0, correct:0, bestCombo:0, medals:[], sound:false };
+  const state = { xp:0, correct:0, bestCombo:0, medals:[], sound:false, user:null };
+  let saveT;
   const TITLES = [[0,"Bijbelbeginner"],[100,"Sacramentenkenner"],[250,"Feestenexpert"],[500,"Geloofsverkenner"],[900,"Religieuze allesweter"]];
   const $ = s => document.querySelector(s);
   const ico = name => `<i class="lni lni-${name}" aria-hidden="true"></i>`;
@@ -9,6 +10,37 @@ const SJ = (() => {
   const title = () => TITLES.filter(t => state.xp >= t[0]).pop()[1];
 
   function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(toast.id);toast.id=setTimeout(()=>t.classList.remove("show"),2600);}
+
+  /* Account-sync: de API draait op dezelfde origin als de game. */
+  function syncLoginButton(){
+    const b = $("#loginBtn"); if(!b) return;
+    b.title = state.user ? `Ingelogd als ${state.user.name || state.user.email} — klik om uit te loggen` : "Inloggen met Microsoft";
+    b.classList.toggle("active", !!state.user);
+    const admin = $("#adminBtn");
+    if(admin) admin.hidden = state.user?.role !== "admin";
+  }
+  async function loadSession(){
+    try{
+      const r = await fetch("/api/session",{credentials:"same-origin"});
+      const d = await r.json();
+      state.user = d.user || null;
+      if(state.user){
+        const p = await (await fetch("/api/progress",{credentials:"same-origin"})).json();
+        state.xp = p.xp || 0; state.correct = p.correct || 0;
+        state.bestCombo = p.best_combo || 0;
+        try{ state.medals = JSON.parse(p.medals || "[]"); }catch{ state.medals = []; }
+      }
+    }catch(e){ /* geen API beschikbaar: lokaal blijven spelen */ }
+    render(); syncLoginButton();
+  }
+  function saveProgress(){
+    if(!state.user) return;
+    clearTimeout(saveT);
+    saveT = setTimeout(() => {
+      fetch("/api/progress",{method:"POST",credentials:"same-origin",headers:{"content-type":"application/json"},
+        body:JSON.stringify({xp:state.xp,correct:state.correct,best_combo:state.bestCombo,medals:state.medals})}).catch(()=>{});
+    }, 400);
+  }
 
   let ctx;
   function beep(freq=660,dur=.12){
@@ -33,7 +65,7 @@ const SJ = (() => {
     if(level()>oldLevel){toast("Niveau "+level()+" bereikt!");confetti();}
     if(state.correct>=10&&!state.medals.some(m=>m.key==="correct10"))state.medals.push({key:"correct10", icon:"crown-3", text:"10 juist"});
     if(state.bestCombo>=5&&!state.medals.some(m=>m.key==="combo5"))state.medals.push({key:"combo5", icon:"fireworks", text:"Combo 5"});
-    render();
+    render(); saveProgress();
   }
 
   function render(){
@@ -68,7 +100,12 @@ const SJ = (() => {
     $("#modeGrid").innerHTML=modes.map(m=>`<button class="mode ${games[m[0]]?"":"soon"}" data-play="${m[0]}"><span class="ico">${ico(m[1])}</span><h3>${m[2]}</h3><p>${m[3]}</p>${games[m[0]]?"":'<span class="tag">Binnenkort</span>'}</button>`).join("");
     $("#topicList").innerHTML=cats.map(c=>`<span class="topic">${c}<small>${bank.filter(q=>q.category===c).length}</small></span>`).join("");
     $("#soundBtn").onclick=function(){state.sound=!state.sound;this.innerHTML=ico(state.sound?"volume-high":"volume-mute");this.setAttribute("aria-pressed",state.sound);beep(880);};
-    render();
+    $("#loginBtn").onclick = () => {
+      if(state.user){ location.href = "/auth/logout"; }
+      else { location.href = "/auth/login?return=" + encodeURIComponent(location.pathname + location.search); }
+    };
+    if($("#adminBtn")) $("#adminBtn").onclick = () => location.href = "/admin.html";
+    render(); loadSession();
   }
   return {init,registerGame,addXp,toast,beep,confetti,pick,home,ico,state};
 })();

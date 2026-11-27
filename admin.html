@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vragen beheren · SJBquest</title>
+<link href="https://cdn.lineicons.com/5.2/line/lineicons.css" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.admin{max-width:900px;margin:0 auto;padding-bottom:60px}
+.admin-card{background:#fff;border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);padding:22px;margin-top:20px}
+.qcard{border:1px solid var(--border);border-radius:16px;padding:14px;margin-bottom:12px;background:#fbfcfe}
+.qgrid{display:grid;grid-template-columns:70px 1fr 130px 90px;gap:8px}
+.qgrid input,.qgrid select,.qcard input,.qcard textarea{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:10px;font:inherit;background:#fff}
+.qcard label{display:block;font-size:.72rem;color:var(--muted);margin:8px 0 3px;text-transform:uppercase;letter-spacing:.06em}
+.qcard textarea{min-height:88px;resize:vertical}
+.q-actions{display:flex;gap:8px;margin-top:10px}
+.q-actions button{padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:#fff;cursor:pointer;font-weight:700}
+.q-actions .danger{border-color:var(--red);color:var(--red)}
+.admin-actions{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+@media(max-width:640px){.qgrid{grid-template-columns:60px 1fr}.qgrid>*{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<header class="nav">
+  <a class="brand" href="/"><span>SJB<b>quest</b></span></a>
+  <div class="nav-right"><span class="chip" id="who">Administratie</span><a class="btn" href="/">Terug</a></div>
+</header>
+<main class="admin">
+  <div class="admin-card">
+    <h2>Vragenbank</h2>
+    <p class="muted">Wijzigingen staan direct in D1. De game haalt zijn vragen uit deze API.</p>
+    <div id="rows"></div>
+    <div class="admin-actions">
+      <button class="btn primary" id="add">Nieuwe vraag</button>
+      <button class="btn" id="download">Download JSON</button>
+    </div>
+  </div>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+let rows = [];
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+
+async function load() {
+  const s = await (await fetch("/api/session", {credentials:"same-origin"})).json();
+  if (!s.user || s.user.role !== "admin") { location.href = "/auth/login?return=/admin.html"; return; }
+  $("#who").textContent = s.user.name || s.user.email;
+  rows = await (await fetch("/api/questions")).json();
+  render();
+}
+function render() {
+  $("#rows").innerHTML = rows.map((q, i) => `<div class="qcard" data-i="${i}">
+    <div class="qgrid">
+      <input type="number" data-k="id" value="${esc(q.id)}" aria-label="ID">
+      <input data-k="category" value="${esc(q.category)}" placeholder="Categorie">
+      <select data-k="difficulty">
+        ${["easy","medium","hard"].map(d=>`<option value="${d}" ${q.difficulty===d?"selected":""}>${d}</option>`).join("")}
+      </select>
+      <input type="number" min="0" max="3" data-k="correct" value="${esc(q.correct)}" aria-label="Juiste index">
+    </div>
+    <label>Vraag</label><input data-k="question" value="${esc(q.question)}">
+    <label>Antwoorden (één per regel, 4 stuks)</label><textarea data-k="answers">${esc((q.answers||[]).join("\n"))}</textarea>
+    <label>Uitleg</label><input data-k="explanation" value="${esc(q.explanation)}">
+    <label>Geschikt voor (komma-gescheiden: quiz, memory, faithrunner)</label><input data-k="suitable" value="${esc((q.suitable||[]).join(", "))}">
+    <div class="q-actions"><button data-save="${i}">Opslaan</button><button class="danger" data-del="${i}">Verwijderen</button></div>
+  </div>`).join("");
+  document.querySelectorAll("[data-k]").forEach(el => el.onchange = () => {
+    const q = rows[+el.closest(".qcard").dataset.i], k = el.dataset.k;
+    q[k] = k === "answers" ? el.value.split("\n").map(s=>s.trim()).filter(Boolean)
+      : k === "suitable" ? el.value.split(",").map(s=>s.trim()).filter(Boolean)
+      : k === "id" || k === "correct" ? Number(el.value) : el.value;
+  });
+  document.querySelectorAll("[data-save]").forEach(b => b.onclick = async () => {
+    const i = +b.dataset.save;
+    await fetch("/api/questions", {method:"PUT",credentials:"same-origin",headers:{"content-type":"application/json"},body:JSON.stringify(rows[i])});
+    b.textContent = "Opgeslagen!"; setTimeout(()=>b.textContent="Opslaan", 1400);
+  });
+  document.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
+    const i = +b.dataset.del;
+    if (!confirm(`Vraag ${rows[i].id} verwijderen?`)) return;
+    await fetch("/api/questions?id=" + rows[i].id, {method:"DELETE",credentials:"same-origin"});
+    rows.splice(i,1); render();
+  });
+}
+$("#add").onclick = async () => {
+  const id = rows.length ? Math.max(...rows.map(q => +q.id || 0)) + 1 : 1;
+  const q = {id, category:"Algemene kennis", difficulty:"medium", question:"Nieuwe vraag",
+    answers:["Antwoord A","Antwoord B","Antwoord C","Juiste antwoord"], correct:3,
+    explanation:"Uitleg", suitable:["quiz"]};
+  await fetch("/api/questions", {method:"POST",credentials:"same-origin",headers:{"content-type":"application/json"},body:JSON.stringify(q)});
+  rows.push(q); render();
+};
+$("#download").onclick = async () => {
+  const data = await (await fetch("/api/export", {credentials:"same-origin"})).json();
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+  a.download = "questionsdata.json"; a.click(); URL.revokeObjectURL(a.href);
+};
+load().catch(() => { location.href = "/auth/login?return=/admin.html"; });
+</script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "geloofsquest",
+  "compatibility_date": "2026-11-26",
+  "main": "worker/index.js",
+  "assets": {
+    "directory": ".",
+    "not_found_handling": "404-page"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "geloofsquest",
+      "database_id": "4a55ef0d-2546-42aa-8a02-43b474de6d6f"
+    }
+  ],
+  "vars": {
+    "MICROSOFT_CLIENT_ID": "PASTE_APPLICATION_CLIENT_ID_HERE",
+    "MICROSOFT_TENANT": "common",
+    "ADMIN_EMAILS": ""
+  }
+}

@@ -202,6 +202,12 @@ export default {
         return redirect("/", { "set-cookie": setCookie("sq_session", "", 0, req) });
       }
       if (url.pathname === "/api/session") {
+        if (url.searchParams.has("debug")) {
+          const raw = cookies(req).sq_session;
+          const verified = await currentUser(req, env);
+          return json({ host: url.host, hasCookie: !!raw, cookieLength: raw?.length || 0,
+            verified: !!verified, user: verified ? { name: verified.name, email: verified.email, role: verified.role } : null });
+        }
         const user = await currentUser(req, env);
         if (!user) return json({ user: null });
         const row = await env.DB.prepare("SELECT display_name, avatar, role FROM users WHERE microsoft_sub=?").bind(user.sub).first();

@@ -1,6 +1,6 @@
-/* VERHAAL – enkel dit bestand aanpassen om scènes toe te voegen.
-   Types: say | choice | quiz | order | sort | get | end
-   bg: w0 (Scriptorium), w1 (Rivier). Voeg nieuwe achtergronden toe in style.css. */
+
+
+
 const WHO = {Verteller:"📖", Jij:"🙂", Noor:"🧭", Poortwachter:"🌊"};
 const START = "s1";
 const SCENES = {

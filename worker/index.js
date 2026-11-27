@@ -1,4 +1,4 @@
-/* SJBquest auth + data API. Public Microsoft OAuth (PKCE), D1 storage. */
+
 const AUTH = "https://login.microsoftonline.com";
 const SESSION_DAYS = 7;
 let jwksCache = { at: 0, keys: [] };

@@ -59,7 +59,7 @@ main{max-width:1080px;margin:0 auto;padding:24px clamp(16px,4vw,40px) 60px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,120px);background:var(--blue-dark);color:#fff;padding:12px 20px;border-radius:14px;transition:.35s;z-index:50;max-width:90vw;text-align:center}
 .toast.show{transform:translate(-50%,0)}
 #confetti{position:fixed;inset:0;pointer-events:none;z-index:60;width:100%;height:100%}
-/* Lineicons: één maatvoering per context */
+
 .lni{line-height:1;vertical-align:-.12em}
 .icon-btn .lni{font-size:22px;vertical-align:0}
 .mode .ico .lni{font-size:30px;vertical-align:0}

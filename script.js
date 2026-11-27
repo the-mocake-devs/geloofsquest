@@ -1,4 +1,4 @@
-/* SJ = kern van de game: voortgang (enkel in geheugen), geluid, confetti, spelregisterr. */
+
 const SJ = (() => {
   const games = {};
   const state = { xp:0, correct:0, bestCombo:0, medals:[], sound:false, user:null };
@@ -11,7 +11,7 @@ const SJ = (() => {
 
   function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(toast.id);toast.id=setTimeout(()=>t.classList.remove("show"),2600);}
 
-  /* Account-sync: de API draait op dezelfde origin als de game. */
+  
   function syncAccountMenu(){
     const face = $("#accountFace"), head = $("#accountHead"), menu = $("#accountMenu");
     if(!face || !head || !menu) return;
@@ -39,7 +39,7 @@ const SJ = (() => {
         state.bestCombo = p.best_combo || 0;
         try{ state.medals = JSON.parse(p.medals || "[]"); }catch{ state.medals = []; }
       }
-    }catch(e){ /* geen API beschikbaar: lokaal blijven spelen */ }
+    }catch(e){  }
     render(); syncAccountMenu();
   }
   function saveProgress(){
@@ -93,14 +93,14 @@ const SJ = (() => {
 
   function registerGame(key,def){games[key]=def;}
 
-  function pick(filter={}){ // helper voor alle spelmodi
+  function pick(filter={}){ 
     const bank = Array.isArray(questions) ? questions : [];
     let list=bank.filter(q=>(!filter.category||q.category===filter.category)&&(!filter.difficulty||q.difficulty===filter.difficulty)&&(!filter.game||(q.suitable||["quiz"]).includes(filter.game)));
     return list.map(q=>[Math.random(),q]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]).slice(0,filter.count||list.length);
   }
 
   function init(){
-    // Klikken moet altijd werken, ook als de vragenbank niet geladen is.
+    
     document.addEventListener("click",e=>{const p=e.target.closest("[data-play]");if(p)return play(p.dataset.play);if(e.target.closest("[data-go=home]")){e.preventDefault();home();}});
     const bank = Array.isArray(questions) ? questions : [];
     const cats = Array.isArray(CATEGORIES) ? CATEGORIES : [];

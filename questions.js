@@ -1,4 +1,4 @@
-/* VRAGENBANK — API eerst, dan questionsdata.json, dan ingebouwde vragen. */
+
 const CATEGORIES = ["Sacramenten","Bijbel","Jezus","Feesten","Tien geboden","Parabels","Symbolen","Wereldgodsdiensten",
   "Godsdiensten","Christendom","Levensbeschouwingen","Islam","Hindoeïsme en boeddhisme","Algemene kennis"];
 
@@ -18,7 +18,7 @@ const BUILTIN_QUESTIONS = [
 let questions = BUILTIN_QUESTIONS.slice();
 const shuffle = a => a.map(x => [Math.random(), x]).sort((p, q) => p[0] - q[0]).map(x => x[1]);
 
-/* Zet rijen (met categorie/vraag/antwoord of category/question/answer) om naar meerkeuze. */
+
 function convertQuestions(data) {
   const value = (q, a, b) => q[a] ?? q[b];
   const byCat = {};
@@ -49,12 +49,12 @@ async function loadQuestions() {
         return;
       }
     }
-  } catch (e) { /* geen API: gebruik het JSON-bestand */ }
+  } catch (e) {  }
   try {
     const res = await fetch("questionsdata.json");
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data) && data.length) questions = data.every(q => Array.isArray(q.answers)) ? data : convertQuestions(data);
     }
-  } catch (e) { /* ingebouwde vragen blijven bruikbaar */ }
+  } catch (e) {  }
 }

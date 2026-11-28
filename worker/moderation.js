@@ -118,7 +118,11 @@ export async function handleModeration(req, env, path, sessionUser) {
       "SELECT microsoft_sub, email, role FROM users WHERE microsoft_sub=?"
     ).bind(targetId).first();
     if (!target) return json({ error: "Speler niet gevonden." }, 404);
-    if (target.role === "admin") return json({ error: "Beheerders kunnen niet via dit paneel worden gemodereerd." }, 403);
+    if (["admin", "opadmin"].includes(target.role)) {
+  return json({
+    error: "Beheerders kunnen niet via dit paneel worden gemodereerd."
+  }, 403);
+}
     if (target.microsoft_sub === moderator.microsoft_sub) return json({ error: "Je kunt jezelf niet modereren." }, 403);
 
     const now = new Date().toISOString();

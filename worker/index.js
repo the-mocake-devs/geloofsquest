@@ -18,6 +18,13 @@ function safeReturn(value) {
   if (p === MOUNT || p.startsWith(MOUNT + "/")) return p.slice(0, 200);
   return (MOUNT + p).slice(0, 200);
 }
+function roleFor(email, env) {
+  const e = String(email || "").toLowerCase();
+  const list = value => (value || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+  if (list(env.OPADMIN_EMAILS).includes(e)) return "opadmin";
+  if (list(env.ADMIN_EMAILS).includes(e)) return "admin";
+  return "player";
+}
 
 const json = (data, status = 200, headers = {}) => new Response(JSON.stringify(data), {
   status,
@@ -241,7 +248,7 @@ async function currentUser(req, env) {
   if (!session) return null;
 
   const row = await env.DB.prepare(`
-    SELECT role, is_banned, banned_until, session_version
+    SELECT email, role, is_banned, banned_until, session_version
     FROM users
     WHERE microsoft_sub=?
   `).bind(session.sub).first();
@@ -270,9 +277,16 @@ async function currentUser(req, env) {
     "UPDATE users SET last_seen=? WHERE microsoft_sub=?"
   ).bind(new Date().toISOString(), session.sub).run();
 
+  const role = roleFor(row.email || session.email, env);
+  if (row.role !== role) {
+    await env.DB.prepare(
+      "UPDATE users SET role=? WHERE microsoft_sub=?"
+    ).bind(role, session.sub).run();
+  }
+
   return {
     ...session,
-    role: row.role
+    role
   };
 }
 
@@ -369,23 +383,7 @@ async function callback(req, url, env) {
   const email = claims.preferred_username || claims.email || "";
   const name = claims.name || email;
 
-const admins = (env.ADMIN_EMAILS || "")
-  .split(",")
-  .map(s => s.trim().toLowerCase())
-  .filter(Boolean);
-
-const opadmins = (env.OPADMIN_EMAILS || "")
-  .split(",")
-  .map(s => s.trim().toLowerCase())
-  .filter(Boolean);
-
-const normalizedEmail = email.toLowerCase();
-
-const role = opadmins.includes(normalizedEmail)
-  ? "opadmin"
-  : admins.includes(normalizedEmail)
-    ? "admin"
-    : "player";
+  const role = roleFor(email, env);
   const now = new Date().toISOString();
 
   await env.DB.prepare(`
@@ -594,7 +592,7 @@ export default {
           user: {
             name: row?.display_name || user.name,
             email: user.email,
-            role: row?.role || user.role,
+            role: user.role,
             avatar: row?.avatar || null
           }
         });

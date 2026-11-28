@@ -24,8 +24,8 @@ async function moderatorFor(user, env) {
 
   if (
     !row ||
-    row.role !== "opadmin" ||
-    !configuredOpadmins.includes(String(row.email || "").toLowerCase())
+    user.role !== "opadmin" ||
+    !configuredOpadmins.includes(String(row.email || user.email || "").toLowerCase())
   ) {
     return null;
   }

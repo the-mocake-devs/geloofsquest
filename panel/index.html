@@ -16,7 +16,7 @@
     <a class="brand" href="./"><span>SJB<b>quest</b></span></a>
     <div class="nav-right">
       <span class="chip" id="panelUser">Moderatie</span>
-      <a class="btn" href="./">Terug naar de quest</a>
+      <a class="btn" href="../">Terug naar de quest</a>
     </div>
   </header>
 
@@ -70,7 +70,9 @@
     <p class="mod-footnote">Spelers worden als recent actief getoond wanneer hun laatste API-activiteit minder dan vijf minuten geleden was. Dit is geen realtime online-indicator.</p>
   </main>
 
-  <script>window.SJ_BASE = location.pathname === "/quest" || location.pathname.startsWith("/quest/") ? "/quest" : "";</script>
-  <script src="panel.js"></script>
+<script>
+  window.SJ_BASE = "/quest";
+</script>
+<script src="panel.js"></script>
 </body>
 </html>

@@ -212,9 +212,9 @@ async function currentUser(req, env) {
 async function requireAdmin(req, env) {
   const user = await currentUser(req, env);
 
-  if (!user || user.role !== "admin") {
-    return json({ error: "Forbidden" }, 403);
-  }
+if (!user || !["admin", "opadmin"].includes(user.role)) {
+  return json({ error: "Forbidden" }, 403);
+}
 
   return null;
 }

@@ -88,10 +88,10 @@
     try {
       const session = await api("/api/session");
       if (!session.user) {
-        location.href = BASE + "/auth/login?return=" + encodeURIComponent(BASE + "/panel.html");
+        location.href = BASE + "/auth/login?return=" + encodeURIComponent(BASE + "/panel/");
         return;
       }
-      if (session.user.role !== "admin") {
+      if (session.user.role !== "opadmin") {
         document.querySelector(".mod-main").innerHTML = `<section class="mod-card"><h1>Geen toegang</h1><p>Dit paneel is alleen toegankelijk voor bevoegde beheerders.</p><a class="btn" href="./">Terug naar SJBquest</a></section>`;
         return;
       }

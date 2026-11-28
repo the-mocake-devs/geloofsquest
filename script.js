@@ -157,15 +157,47 @@ async function checkSessionStatus() {
   }
 }
 
-  async function loadSession(){
-    try{
-      await checkSessionStatus();
 
-if (state.user === null) {
-  const statusResponse = await fetch(BASE + "/api/session?t=" + Date.now(), {
-    credentials: "same-origin"
-  });
+async function loadSession() {
+  try {
+    const noticeShown = await checkSessionStatus();
+
+    if (noticeShown) {
+      render();
+      syncAccountMenu();
+      return;
+    }
+
+    const r = await fetch(BASE + "/api/session?t=" + Date.now(), {
+      credentials: "same-origin"
+    });
+
+    const d = await r.json();
+    state.user = d.user || null;
+
+    if (state.user) {
+      const p = await (await fetch(BASE + "/api/progress", {
+        credentials: "same-origin"
+      })).json();
+
+      state.xp = p.xp || 0;
+      state.correct = p.correct || 0;
+      state.bestCombo = p.best_combo || 0;
+
+      try {
+        state.medals = JSON.parse(p.medals || "[]");
+      } catch {
+        state.medals = [];
+      }
+    }
+  } catch (e) {
+    console.error("Session loading failed:", e);
+  }
+
+  render();
+  syncAccountMenu();
 }
+
       const d = await r.json();
       state.user = d.user || null;
       if(state.user){

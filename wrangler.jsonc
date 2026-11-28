@@ -23,6 +23,6 @@
   "vars": {
     "MICROSOFT_CLIENT_ID": "aca053a9-6d35-445f-b0fd-0d0502275ad6",
     "MICROSOFT_TENANT": "common",
-    "ADMIN_EMAILS": "pimwillekens@gmail.com,anik.vandenheuvel@sjbmalle.be,vandenbroeckthijs2013@gmail.com"
+    "ADMIN_EMAILS": "pimwillekens@gmail.com,anik.vandenheuvel@sjbmalle.be,vandenbroeckthijs2013@gmail.com,"
   }
 }

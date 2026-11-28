@@ -10,289 +10,378 @@ const SJ = (() => {
   const level = () => Math.floor(state.xp/100)+1;
   const title = () => TITLES.filter(t => state.xp >= t[0]).pop()[1];
 
-  function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(toast.id);toast.id=setTimeout(()=>t.classList.remove("show"),2600);}
-
-  
-  function syncAccountMenu(){
-    const face = $("#accountFace"), head = $("#accountHead"), menu = $("#accountMenu");
-    if(!face || !head || !menu) return;
-    face.innerHTML = state.user?.avatar
-      ? `<img src="${state.user.avatar}" alt="">`
-      : ico(state.user ? "user-4" : "user-4");
-    $("#accountBtn").classList.toggle("active", !!state.user);
-    $("#accountBtn").title = state.user ? `Ingelogd als ${state.user.name}` : "Inloggen met Microsoft";
-    head.innerHTML = state.user
-      ? `<b>${state.user.name || state.user.email}</b>${state.user.email} · ${state.user.role}`
-      : "Niet ingelogd";
-    menu.querySelector('[data-a=login]').hidden = !!state.user;
-    menu.querySelector('[data-a=logout]').hidden = !state.user;
-    menu.querySelector('[data-a=profile]').hidden = !state.user;
-    menu.querySelector('[data-a=admin]').hidden = !["admin", "opadmin"].includes(state.user?.role);
-    menu.querySelector('[data-a=admin]').href = BASE + "/admin";
-
-    menu.querySelector('[data-a=opadmin]').hidden = state.user?.role !== "opadmin";
-    menu.querySelector('[data-a=opadmin]').href = BASE + "/panel/";
+  function toast(msg){
+    const t=$("#toast");
+    if(!t)return;
+    t.textContent=msg;
+    t.classList.add("show");
+    clearTimeout(toast.id);
+    toast.id=setTimeout(()=>t.classList.remove("show"),2600);
   }
-  
 
-async function checkSessionStatus() {
-  try {
-    const response = await fetch(BASE + "/api/session-status", {
-      credentials: "same-origin",
-      cache: "no-store"
-    });
+  function syncAccountMenu(){
+    const face=$("#accountFace"),head=$("#accountHead"),menu=$("#accountMenu");
+    if(!face||!head||!menu)return;
 
-    const data = await response.json();
+    face.innerHTML=state.user?.avatar
+      ? `<img src="${state.user.avatar}" alt="">`
+      : ico("user-4");
 
-    if (data.status !== "banned" && data.status !== "revoked") {
+    $("#accountBtn").classList.toggle("active",!!state.user);
+    $("#accountBtn").title=state.user?`Ingelogd als ${state.user.name}`:"Inloggen met Microsoft";
+
+    head.innerHTML=state.user
+      ? `<b>${state.user.name||state.user.email}</b>${state.user.email} · ${state.user.role}`
+      : "Niet ingelogd";
+
+    menu.querySelector('[data-a=login]').hidden=!!state.user;
+    menu.querySelector('[data-a=logout]').hidden=!state.user;
+    menu.querySelector('[data-a=profile]').hidden=!state.user;
+    menu.querySelector('[data-a=admin]').hidden= !["admin","opadmin"].includes(state.user?.role);
+    menu.querySelector('[data-a=admin]').href=BASE+"/admin";
+    menu.querySelector('[data-a=opadmin]').hidden=state.user?.role!=="opadmin";
+    menu.querySelector('[data-a=opadmin]').href=BASE+"/panel/";
+  }
+
+  async function checkSessionStatus(){
+    try{
+      const response=await fetch(BASE+"/api/session-status",{
+        credentials:"same-origin",
+        cache:"no-store"
+      });
+
+      if(!response.ok)return false;
+
+      const data=await response.json();
+
+      if(data.status!=="banned"&&data.status!=="revoked")return false;
+
+      state.user=null;
+
+      const overlay=document.createElement("div");
+      overlay.className="session-notice-overlay";
+
+      let duration="Permanent";
+
+      if(data.status==="banned"&&data.banned_until){
+        const remaining=Math.max(0,Date.parse(data.banned_until)-Date.now());
+        const days=Math.floor(remaining/86400000);
+        const hours=Math.floor((remaining%86400000)/3600000);
+        const minutes=Math.floor((remaining%3600000)/60000);
+        duration=`${days} dagen, ${hours} uur en ${minutes} minuten`;
+      }
+
+      overlay.innerHTML=`
+        <div class="session-notice">
+          <div class="session-notice-icon">!</div>
+          <span class="session-notice-label">SJBQUEST · ACCOUNTMELDING</span>
+          <h1>${data.status==="banned"?"Je bent geband":"Je sessie is ingetrokken"}</h1>
+          <p>
+            ${data.status==="banned"
+              ?"Je hebt tijdelijk of permanent geen toegang meer tot SJBquest."
+              :"Een beheerder heeft je huidige sessie ingetrokken. Je moet opnieuw inloggen."}
+          </p>
+          <div class="session-notice-detail">
+            <span>REDEN</span>
+            <strong class="session-reason"></strong>
+          </div>
+          ${data.status==="banned"?`
+            <div class="session-notice-detail">
+              <span>DUUR</span>
+              <strong class="session-duration"></strong>
+            </div>
+          `:""}
+          <button class="session-notice-button">Begrepen</button>
+        </div>
+      `;
+
+      overlay.querySelector(".session-reason").textContent=
+        data.reason||"Geen reden opgegeven.";
+
+      const durationElement=overlay.querySelector(".session-duration");
+      if(durationElement){
+        durationElement.textContent=data.permanent?"Permanent":duration;
+      }
+
+      document.body.appendChild(overlay);
+
+      overlay.querySelector("button").onclick=()=>{
+        overlay.remove();
+        location.href=BASE+"/";
+      };
+
+      syncAccountMenu();
+      return true;
+    }catch(error){
+      console.error("Session status check failed:",error);
       return false;
     }
-
-    state.user = null;
-
-    const overlay = document.createElement("div");
-    overlay.className = "session-notice-overlay";
-
-    let duration = "Permanent";
-
-    if (data.status === "banned" && data.banned_until) {
-      const remaining = Math.max(0, Date.parse(data.banned_until) - Date.now());
-      const days = Math.floor(remaining / 86400000);
-      const hours = Math.floor((remaining % 86400000) / 3600000);
-      const minutes = Math.floor((remaining % 3600000) / 60000);
-
-      duration = `${days} dagen, ${hours} uur en ${minutes} minuten`;
-    }
-
-    overlay.innerHTML = `
-      <div class="session-notice">
-        <div class="session-notice-icon">!</div>
-        <span class="session-notice-label">SJBQUEST · ACCOUNTMELDING</span>
-        <h1>${data.status === "banned" ? "Je bent geband" : "Je sessie is ingetrokken"}</h1>
-        <p>
-          ${data.status === "banned"
-            ? "Je hebt tijdelijk of permanent geen toegang meer tot SJBquest."
-            : "Een beheerder heeft je huidige sessie ingetrokken. Je moet opnieuw inloggen."}
-        </p>
-        <div class="session-notice-detail">
-          <span>REDEN</span>
-          <strong></strong>
-        </div>
-        ${data.status === "banned" ? `
-          <div class="session-notice-detail">
-            <span>DUUR</span>
-            <strong class="session-duration"></strong>
-          </div>
-        ` : ""}
-        <button class="session-notice-button">Begrepen</button>
-      </div>
-    `;
-
-    overlay.querySelector(".session-notice-detail strong").textContent =
-      data.reason || "Geen reden opgegeven.";
-
-    const durationElement = overlay.querySelector(".session-duration");
-    if (durationElement) {
-      durationElement.textContent = data.permanent ? "Permanent" : duration;
-    }
-
-    document.body.appendChild(overlay);
-
-    overlay.querySelector("button").onclick = () => {
-      overlay.remove();
-      location.href = BASE + "/";
-    };
-
-    syncAccountMenu();
-    return true;
-  } catch (error) {
-    console.error("Session status check failed:", error);
-    return false;
   }
-}
 
+  async function loadSession(){
+    try{
+      const noticeShown=await checkSessionStatus();
 
-    overlay.innerHTML = `
-      <div class="session-notice">
-        <div class="session-notice-icon">!</div>
-        <span class="session-notice-label">SJBQUEST · ACCOUNTMELDING</span>
-        <h1>${data.status === "banned" ? "Je bent geband" : "Je sessie is ingetrokken"}</h1>
-        <p>
-          ${data.status === "banned"
-            ? "Je hebt tijdelijk of permanent geen toegang meer tot SJBquest."
-            : "Een beheerder heeft je huidige sessie ingetrokken. Je moet opnieuw inloggen."}
-        </p>
-        <div class="session-notice-detail">
-          <span>REDEN</span>
-          <strong></strong>
-        </div>
-        ${data.status === "banned" ? `
-          <div class="session-notice-detail">
-            <span>DUUR</span>
-            <strong class="session-duration"></strong>
-          </div>
-        ` : ""}
-        <button class="session-notice-button">Begrepen</button>
-      </div>
-    `;
-
-    overlay.querySelector(".session-notice-detail strong").textContent =
-      data.reason || "Geen reden opgegeven.";
-
-    const durationElement = overlay.querySelector(".session-duration");
-    if (durationElement) {
-      durationElement.textContent = data.permanent ? "Permanent" : duration;
-    }
-
-    document.body.appendChild(overlay);
-
-    overlay.querySelector("button").onclick = () => {
-      overlay.remove();
-      location.href = BASE + "/";
-    };
-
-    syncAccountMenu();
-  } catch (error) {
-    console.error("Session status check failed:", error);
-  }
-}
-
-
-async function loadSession() {
-  try {
-    const noticeShown = await checkSessionStatus();
-
-    if (noticeShown) {
-      render();
-      syncAccountMenu();
-      return;
-    }
-
-    const r = await fetch(BASE + "/api/session?t=" + Date.now(), {
-      credentials: "same-origin"
-    });
-
-    const d = await r.json();
-    state.user = d.user || null;
-
-    if (state.user) {
-      const p = await (await fetch(BASE + "/api/progress", {
-        credentials: "same-origin"
-      })).json();
-
-      state.xp = p.xp || 0;
-      state.correct = p.correct || 0;
-      state.bestCombo = p.best_combo || 0;
-
-      try {
-        state.medals = JSON.parse(p.medals || "[]");
-      } catch {
-        state.medals = [];
+      if(noticeShown){
+        render();
+        syncAccountMenu();
+        return;
       }
-    }
-  } catch (e) {
-    console.error("Session loading failed:", e);
-  }
 
-  render();
-  syncAccountMenu();
-}
+      const r=await fetch(BASE+"/api/session?t="+Date.now(),{
+        credentials:"same-origin",
+        cache:"no-store"
+      });
 
-      const d = await r.json();
-      state.user = d.user || null;
+      const d=await r.json();
+      state.user=d.user||null;
+
       if(state.user){
-        const p = await (await fetch(BASE + "/api/progress",{credentials:"same-origin"})).json();
-        state.xp = p.xp || 0; state.correct = p.correct || 0;
-        state.bestCombo = p.best_combo || 0;
-        try{ state.medals = JSON.parse(p.medals || "[]"); }catch{ state.medals = []; }
+        const progressResponse=await fetch(BASE+"/api/progress",{
+          credentials:"same-origin"
+        });
+
+        if(progressResponse.ok){
+          const p=await progressResponse.json();
+          state.xp=p.xp||0;
+          state.correct=p.correct||0;
+          state.bestCombo=p.best_combo||0;
+
+          try{
+            state.medals=JSON.parse(p.medals||"[]");
+          }catch{
+            state.medals=[];
+          }
+        }
       }
-    }catch(e){  }
-    render(); syncAccountMenu();
+    }catch(e){
+      console.error("Session loading failed:",e);
+    }
+
+    render();
+    syncAccountMenu();
   }
+
   function saveProgress(){
-    if(!state.user) return;
+    if(!state.user)return;
     clearTimeout(saveT);
-    saveT = setTimeout(() => {
-      fetch(BASE + "/api/progress",{method:"POST",credentials:"same-origin",headers:{"content-type":"application/json"},
-        body:JSON.stringify({xp:state.xp,correct:state.correct,best_combo:state.bestCombo,medals:state.medals})}).catch(()=>{});
-    }, 400);
+
+    saveT=setTimeout(()=>{
+      fetch(BASE+"/api/progress",{
+        method:"POST",
+        credentials:"same-origin",
+        headers:{"content-type":"application/json"},
+        body:JSON.stringify({
+          xp:state.xp,
+          correct:state.correct,
+          best_combo:state.bestCombo,
+          medals:state.medals
+        })
+      }).catch(()=>{});
+    },400);
   }
 
   let ctx;
+
   function beep(freq=660,dur=.12){
-    if(!state.sound) return;
-    try{ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();
-      const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=freq;g.gain.value=.06;
-      o.connect(g);g.connect(ctx.destination);o.start();o.stop(ctx.currentTime+dur);}catch(e){}
+    if(!state.sound)return;
+
+    try{
+      ctx=ctx||new(window.AudioContext||window.webkitAudioContext)();
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.frequency.value=freq;
+      g.gain.value=.06;
+      o.connect(g);
+      g.connect(ctx.destination);
+      o.start();
+      o.stop(ctx.currentTime+dur);
+    }catch(e){}
   }
 
   function confetti(){
-    const c=$("#confetti"),x=c.getContext("2d");c.width=innerWidth;c.height=innerHeight;
+    const c=$("#confetti");
+    if(!c)return;
+    const x=c.getContext("2d");
+    c.width=innerWidth;
+    c.height=innerHeight;
+
     const cols=["#f4c542","#3f806d","#153c6b","#eaf2fb"];
-    const p=Array.from({length:120},()=>({x:Math.random()*c.width,y:-20,vx:Math.random()*4-2,vy:Math.random()*4+2,s:Math.random()*8+4,c:cols[Math.random()*4|0]}));
-    let f=0;(function tick(){x.clearRect(0,0,c.width,c.height);
-      p.forEach(q=>{q.x+=q.vx;q.y+=q.vy;x.fillStyle=q.c;x.fillRect(q.x,q.y,q.s,q.s);});
-      if(++f<140) requestAnimationFrame(tick); else x.clearRect(0,0,c.width,c.height);})();
+    const p=Array.from({length:120},()=>({
+      x:Math.random()*c.width,
+      y:-20,
+      vx:Math.random()*4-2,
+      vy:Math.random()*4+2,
+      s:Math.random()*8+4,
+      c:cols[Math.random()*4|0]
+    }));
+
+    let f=0;
+
+    (function tick(){
+      x.clearRect(0,0,c.width,c.height);
+      p.forEach(q=>{
+        q.x+=q.vx;
+        q.y+=q.vy;
+        x.fillStyle=q.c;
+        x.fillRect(q.x,q.y,q.s,q.s);
+      });
+
+      if(++f<140)requestAnimationFrame(tick);
+      else x.clearRect(0,0,c.width,c.height);
+    })();
   }
 
   function addXp(n,{right=false,combo=0}={}){
-    const oldLevel=level();state.xp+=n;if(right)state.correct++;
+    const oldLevel=level();
+    state.xp+=n;
+    if(right)state.correct++;
     state.bestCombo=Math.max(state.bestCombo,combo);
-    if(level()>oldLevel){toast("Niveau "+level()+" bereikt!");confetti();}
-    if(state.correct>=10&&!state.medals.some(m=>m.key==="correct10"))state.medals.push({key:"correct10", icon:"crown-3", text:"10 juist"});
-    if(state.bestCombo>=5&&!state.medals.some(m=>m.key==="combo5"))state.medals.push({key:"combo5", icon:"fireworks", text:"Combo 5"});
-    render(); saveProgress();
+
+    if(level()>oldLevel){
+      toast("Niveau "+level()+" bereikt!");
+      confetti();
+    }
+
+    if(state.correct>=10&&!state.medals.some(m=>m.key==="correct10")){
+      state.medals.push({key:"correct10",icon:"crown-3",text:"10 juist"});
+    }
+
+    if(state.bestCombo>=5&&!state.medals.some(m=>m.key==="combo5")){
+      state.medals.push({key:"combo5",icon:"fireworks",text:"Combo 5"});
+    }
+
+    render();
+    saveProgress();
   }
 
   function render(){
     $("#navLevel").textContent="Niveau "+level();
-    const xp=$("#navXp");xp.textContent=state.xp+" XP";xp.classList.remove("pop");void xp.offsetWidth;xp.classList.add("pop");
-    $("#sesTitle").textContent=title();$("#sesLevel").textContent="Niveau "+level();
+
+    const xp=$("#navXp");
+    xp.textContent=state.xp+" XP";
+    xp.classList.remove("pop");
+    void xp.offsetWidth;
+    xp.classList.add("pop");
+
+    $("#sesTitle").textContent=title();
+    $("#sesLevel").textContent="Niveau "+level();
     $("#sesBar").style.width=(state.xp%100)+"%";
     $("#sesText").textContent=`${state.xp} XP · ${state.correct} juiste antwoorden · beste combo ${state.bestCombo}`;
     $("#medals").innerHTML=state.medals.map(m=>`<span class="medal">${ico(m.icon)} ${m.text}</span>`).join("");
   }
 
-  function show(id){document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.id===id));scrollTo(0,0);}
-  function home(){const g=games.__current;if(g&&g.stop)g.stop();games.__current=null;show("home");}
-  function play(key){const g=games[key];if(!g)return toast("Deze spelmodus komt er snel aan.");
-    games.__current=g;show("game");g.start($("#gameRoot"));}
+  function show(id){
+    document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.id===id));
+    scrollTo(0,0);
+  }
 
-  function registerGame(key,def){games[key]=def;}
+  function home(){
+    const g=games.__current;
+    if(g&&g.stop)g.stop();
+    games.__current=null;
+    show("home");
+  }
 
-  function pick(filter={}){ 
-    const bank = Array.isArray(questions) ? questions : [];
-    let list=bank.filter(q=>(!filter.category||q.category===filter.category)&&(!filter.difficulty||q.difficulty===filter.difficulty)&&(!filter.game||(q.suitable||["quiz"]).includes(filter.game)));
-    return list.map(q=>[Math.random(),q]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]).slice(0,filter.count||list.length);
+  function play(key){
+    const g=games[key];
+    if(!g)return toast("Deze spelmodus komt er snel aan.");
+    games.__current=g;
+    show("game");
+    g.start($("#gameRoot"));
+  }
+
+  function registerGame(key,def){
+    games[key]=def;
+  }
+
+  function pick(filter={}){
+    const bank=Array.isArray(questions)?questions:[];
+    let list=bank.filter(q=>
+      (!filter.category||q.category===filter.category)&&
+      (!filter.difficulty||q.difficulty===filter.difficulty)&&
+      (!filter.game||(q.suitable||["quiz"]).includes(filter.game))
+    );
+
+    return list.map(q=>[Math.random(),q])
+      .sort((a,b)=>a[0]-b[0])
+      .map(x=>x[1])
+      .slice(0,filter.count||list.length);
   }
 
   function init(){
-    
-    document.addEventListener("click",e=>{const p=e.target.closest("[data-play]");if(p)return play(p.dataset.play);if(e.target.closest("[data-go=home]")){e.preventDefault();home();}});
-    const bank = Array.isArray(questions) ? questions : [];
-    const cats = Array.isArray(CATEGORIES) ? CATEGORIES : [];
-    const modes=[["quiz","target-user","Quiz Arena","Meerkeuze met uitleg per vraag."],["runner","bolt-2","Faith Runner","Ren, spring en kies de juiste baan."],
-      ["memory","game-pad-modern-1","Memory Challenge","Koppel begrippen aan hun betekenis."],["daily","star-fat","Daily Challenge","Vijf opdrachten, vijf soorten."],["speed","bolt-3","Speed Quiz","Zoveel mogelijk binnen de tijd."]];
-    $("#modeGrid").innerHTML=modes.map(m=>`<button class="mode ${games[m[0]]?"":"soon"}" data-play="${m[0]}"><span class="ico">${ico(m[1])}</span><h3>${m[2]}</h3><p>${m[3]}</p>${games[m[0]]?"":'<span class="tag">Binnenkort</span>'}</button>`).join("");
-    $("#topicList").innerHTML=cats.map(c=>`<span class="topic">${c}<small>${bank.filter(q=>q.category===c).length}</small></span>`).join("");
-    $("#soundBtn").onclick=function(){state.sound=!state.sound;this.innerHTML=ico(state.sound?"volume-high":"volume-mute");this.setAttribute("aria-pressed",state.sound);beep(880);};
-    $("#accountBtn").onclick = () => {
-      const m = $("#accountMenu"); m.hidden = !m.hidden;
-      $("#accountBtn").setAttribute("aria-expanded", String(!m.hidden));
+    document.addEventListener("click",e=>{
+      const p=e.target.closest("[data-play]");
+      if(p)return play(p.dataset.play);
+      if(e.target.closest("[data-go=home]")){
+        e.preventDefault();
+        home();
+      }
+    });
+
+    const bank=Array.isArray(questions)?questions:[];
+    const cats=Array.isArray(CATEGORIES)?CATEGORIES:[];
+
+    const modes=[
+      ["quiz","target-user","Quiz Arena","Meerkeuze met uitleg per vraag."],
+      ["runner","bolt-2","Faith Runner","Ren, spring en kies de juiste baan."],
+      ["memory","game-pad-modern-1","Memory Challenge","Koppel begrippen aan hun betekenis."],
+      ["daily","star-fat","Daily Challenge","Vijf opdrachten, vijf soorten."],
+      ["speed","bolt-3","Speed Quiz","Zoveel mogelijk binnen de tijd."]
+    ];
+
+    $("#modeGrid").innerHTML=modes.map(m=>
+      `<button class="mode ${games[m[0]]?"":"soon"}" data-play="${m[0]}"><span class="ico">${ico(m[1])}</span><h3>${m[2]}</h3><p>${m[3]}</p>${games[m[0]]?"":'<span class="tag">Binnenkort</span>'}</button>`
+    ).join("");
+
+    $("#topicList").innerHTML=cats.map(c=>
+      `<span class="topic">${c}<small>${bank.filter(q=>q.category===c).length}</small></span>`
+    ).join("");
+
+    $("#soundBtn").onclick=function(){
+      state.sound=!state.sound;
+      this.innerHTML=ico(state.sound?"volume-high":"volume-mute");
+      this.setAttribute("aria-pressed",state.sound);
+      beep(880);
     };
-    $("#accountMenu").addEventListener("click", e => {
-      const a = e.target.closest("[data-a]"); if(!a) return;
-      const action = a.dataset.a;
-      if(action === "login") location.href = BASE + "/auth/login?return=" + encodeURIComponent(location.pathname + location.search);
-      if(action === "logout") location.href = BASE + "/auth/logout";
-      if(action === "profile") location.href = BASE + "/account";
-      if(action === "admin") { e.preventDefault(); location.href = BASE + "/admin"; }
-      if(action === "opadmin") { e.preventDefault(); location.href = BASE + "/panel/"; }
+
+    $("#accountBtn").onclick=()=>{
+      const m=$("#accountMenu");
+      m.hidden=!m.hidden;
+      $("#accountBtn").setAttribute("aria-expanded",String(!m.hidden));
+    };
+
+    $("#accountMenu").addEventListener("click",e=>{
+      const a=e.target.closest("[data-a]");
+      if(!a)return;
+
+      const action=a.dataset.a;
+
+      if(action==="login")location.href=BASE+"/auth/login?return="+encodeURIComponent(location.pathname+location.search);
+      if(action==="logout")location.href=BASE+"/auth/logout";
+      if(action==="profile")location.href=BASE+"/account";
+      if(action==="admin"){
+        e.preventDefault();
+        location.href=BASE+"/admin";
+      }
+      if(action==="opadmin"){
+        e.preventDefault();
+        location.href=BASE+"/panel/";
+      }
     });
-    document.addEventListener("click", e => {
-      if(!e.target.closest("#account")) { const m = $("#accountMenu"); if(m){ m.hidden = true; $("#accountBtn").setAttribute("aria-expanded","false"); } }
+
+    document.addEventListener("click",e=>{
+      if(!e.target.closest("#account")){
+        const m=$("#accountMenu");
+        if(m){
+          m.hidden=true;
+          $("#accountBtn").setAttribute("aria-expanded","false");
+        }
+      }
     });
-    render(); loadSession();
+
+    render();
+    loadSession();
   }
+
   return {init,registerGame,addXp,toast,beep,confetti,pick,home,ico,state};
 })();

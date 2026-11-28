@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vragen beheren · SJBquest</title>
+<title>Leerkracht zone · SJBquest</title>
 <meta name="robots" content="noindex">
 <link href="https://cdn.lineicons.com/5.2/line/lineicons.css" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
@@ -30,11 +30,11 @@
 <main class="admin">
   <div class="admin-card">
     <h2>Vragenbank</h2>
-    <p class="muted">Wijzigingen staan direct in D1. De game haalt zijn vragen uit deze API.</p>
+    <p class="muted">Alle SJBquest vragen, aan te passen, te verwijderen of een compleet nieuwe toe te voegen!</p>
     <div id="rows"></div>
     <div class="admin-actions">
       <button class="btn primary" id="add">Nieuwe vraag</button>
-      <button class="btn" id="download">Download JSON</button>
+      <button class="btn" id="download">JSON</button>
     </div>
   </div>
 </main>
@@ -48,14 +48,14 @@ const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt
 async function load() {
   let s;
   try { s = await (await fetch(BASE + "/api/session?t=" + Date.now(), {credentials:"same-origin"})).json(); }
-  catch { $("#rows").innerHTML = '<p>API niet beschikbaar.</p>'; return; }
+  catch { $("#rows").innerHTML = '<p>API niet beschikbaar. Stuur een mailtje naar Thijs en Pim: contact@sjbijbel.app</p>'; return; }
   if (!s.user) {
     $("#rows").innerHTML = `<p>Je bent niet ingelogd. <a class="btn primary" href="${loginHref}">Inloggen met Microsoft</a></p>`;
     return;
   }
   if (s.user.role !== "admin") {
     $("#who").textContent = s.user.name || s.user.email;
-    $("#rows").innerHTML = `<p>Geen admin-toegang voor <b>${esc(s.user.email)}</b>. Vraag de eigenaar om je toe te voegen aan ADMIN_EMAILS.</p>
+    $("#rows").innerHTML = `<p>Je bent geen leerkracht!<b>${esc(s.user.email)}</b>. Vraag Thijs en Pim om je toe te voegen als Leerkracht: contact@sjbijbel.app</p>
       <p><a class="btn" href="${BASE}/auth/logout">Uitloggen</a></p>`;
     return;
   }
@@ -74,7 +74,7 @@ function render() {
     </div>
     <label>Vraag</label><input data-k="question" value="${esc(q.question)}">
     <label>Antwoorden (één per regel, 4 stuks)</label><textarea data-k="answers">${esc((q.answers||[]).join("\n"))}</textarea>
-    <label>Juist Antwoord (cijfer: 0,1,2,3)</label><input type="number" min="0" max="3" data-k="correct" value="${esc(q.correct)}" aria-label="bv. 2">
+    <label>Juist Antwoord (antwoordcijfer: 1-4)</label><input type="number" min="1" max="4" data-k="correct" value="${esc(q.correct + 1)}" aria-label="bv. 2">
     <label>Uitleg</label><input data-k="explanation" value="${esc(q.explanation)}">
     <label>Geschikt voor (komma-gescheiden: quiz, memory, faithrunner)</label><input data-k="suitable" value="${esc((q.suitable||[]).join(", "))}">
     <div class="q-actions"><button data-save="${i}">Opslaan</button><button class="danger" data-del="${i}">Verwijderen</button></div>
@@ -83,7 +83,7 @@ function render() {
     const q = rows[+el.closest(".qcard").dataset.i], k = el.dataset.k;
     q[k] = k === "answers" ? el.value.split("\n").map(s=>s.trim()).filter(Boolean)
       : k === "suitable" ? el.value.split(",").map(s=>s.trim()).filter(Boolean)
-      : k === "id" || k === "correct" ? Number(el.value) : el.value;
+      : k === "id" || k === "correct" ? Number(el.value) - 1 : el.value;
   });
   document.querySelectorAll("[data-save]").forEach(b => b.onclick = async () => {
     const i = +b.dataset.save;

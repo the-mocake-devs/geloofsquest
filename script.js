@@ -125,6 +125,7 @@ const SJ = (() => {
       if(action === "logout") location.href = BASE + "/auth/logout";
       if(action === "profile") location.href = BASE + "/account";
       if(action === "admin") { e.preventDefault(); location.href = BASE + "/admin"; }
+      if(action === "opadmin") { e.preventDefault(); location.href = BASE + "/panel/"; }
     });
     document.addEventListener("click", e => {
       if(!e.target.closest("#account")) { const m = $("#accountMenu"); if(m){ m.hidden = true; $("#accountBtn").setAttribute("aria-expanded","false"); } }

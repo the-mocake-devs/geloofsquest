@@ -12,16 +12,26 @@ const safeJson = value => {
 
 async function moderatorFor(user, env) {
   if (!user?.sub) return null;
+
   const row = await env.DB.prepare(
     "SELECT microsoft_sub, email, role FROM users WHERE microsoft_sub=?"
   ).bind(user.sub).first();
 
-  const configuredAdmins = (env.ADMIN_EMAILS || "")
-    .split(",").map(value => value.trim().toLowerCase()).filter(Boolean);
-  if (!row || row.role !== "admin" || !configuredAdmins.includes(String(row.email || "").toLowerCase())) return null;
+  const configuredOpadmins = (env.OPADMIN_EMAILS || "")
+    .split(",")
+    .map(value => value.trim().toLowerCase())
+    .filter(Boolean);
+
+  if (
+    !row ||
+    row.role !== "opadmin" ||
+    !configuredOpadmins.includes(String(row.email || "").toLowerCase())
+  ) {
+    return null;
+  }
+
   return row;
 }
-
 async function listPlayers(env) {
   const result = await env.DB.prepare(`
     SELECT u.id, u.microsoft_sub, u.email, u.display_name, u.avatar, u.role,

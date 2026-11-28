@@ -302,12 +302,23 @@ async function callback(req, url, env) {
   const email = claims.preferred_username || claims.email || "";
   const name = claims.name || email;
 
-  const admins = (env.ADMIN_EMAILS || "")
-    .split(",")
-    .map(s => s.trim().toLowerCase())
-    .filter(Boolean);
+const admins = (env.ADMIN_EMAILS || "")
+  .split(",")
+  .map(s => s.trim().toLowerCase())
+  .filter(Boolean);
 
-  const role = admins.includes(email.toLowerCase()) ? "admin" : "player";
+const opadmins = (env.OPADMIN_EMAILS || "")
+  .split(",")
+  .map(s => s.trim().toLowerCase())
+  .filter(Boolean);
+
+const normalizedEmail = email.toLowerCase();
+
+const role = opadmins.includes(normalizedEmail)
+  ? "opadmin"
+  : admins.includes(normalizedEmail)
+    ? "admin"
+    : "player";
   const now = new Date().toISOString();
 
   await env.DB.prepare(`

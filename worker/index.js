@@ -165,6 +165,73 @@ async function verifyMicrosoftToken(idToken, env, nonce) {
   return claims;
 }
 
+async function sessionStatus(req, env) {
+  const session = await verify(
+    cookies(req).sq_session,
+    env.SESSION_SECRET || (env.MICROSOFT_CLIENT_ID + "-dev")
+  );
+
+  if (!session?.sub) return json({ status: "none" });
+
+  const row = await env.DB.prepare(`
+    SELECT is_banned, banned_until, ban_reason, session_version
+    FROM users
+    WHERE microsoft_sub=?
+  `).bind(session.sub).first();
+
+  if (!row) {
+    return json({
+      status: "revoked",
+      reason: "Je account of sessie bestaat niet meer."
+    }, 200, {
+      "Set-Cookie": setCookie("sq_session", "", 0, req)
+    });
+  }
+
+  const now = Date.now();
+  const banUntil = row.banned_until ? Date.parse(row.banned_until) : null;
+  const activeBan = !!row.is_banned && (!banUntil || banUntil > now);
+
+  if (activeBan) {
+    return json({
+      status: "banned",
+      reason: row.ban_reason || "Er is geen reden opgegeven.",
+      banned_until: row.banned_until || null,
+      permanent: !row.banned_until
+    }, 200, {
+      "Set-Cookie": setCookie("sq_session", "", 0, req)
+    });
+  }
+
+  if (row.is_banned && banUntil && banUntil <= now) {
+    await env.DB.prepare(`
+      UPDATE users SET is_banned=0, banned_until=NULL, ban_reason=NULL
+      WHERE microsoft_sub=?
+    `).bind(session.sub).run();
+  }
+
+  if (Number(session.sv || 0) !== Number(row.session_version || 0)) {
+    const latest = await env.DB.prepare(`
+      SELECT action, reason, created_at
+      FROM moderation_logs
+      WHERE target_user_id=?
+      ORDER BY id DESC
+      LIMIT 1
+    `).bind(session.sub).first();
+
+    return json({
+      status: "revoked",
+      reason: latest?.reason || "Een beheerder heeft je sessie ingetrokken.",
+      action: latest?.action || "revoked",
+      revoked_at: latest?.created_at || null
+    }, 200, {
+      "Set-Cookie": setCookie("sq_session", "", 0, req)
+    });
+  }
+
+  return json({ status: "ok" });
+}
+
 async function currentUser(req, env) {
   const session = await verify(
     cookies(req).sq_session,
@@ -494,7 +561,7 @@ export default {
           "set-cookie": setCookie("sq_session", "", 0, req)
         });
       }
-
+      if (path === "/api/session-status") return sessionStatus(req, env);
       if (path === "/api/session") {
         if (url.searchParams.has("debug")) {
           const raw = cookies(req).sq_session;

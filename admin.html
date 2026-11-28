@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vragen beheren · SJBquest</title>
+<meta name="robots" content="noindex">
 <link href="https://cdn.lineicons.com/5.2/line/lineicons.css" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <style>
@@ -23,8 +24,8 @@
 </head>
 <body>
 <header class="nav">
-  <a class="brand" href="/"><span>SJB<b>quest</b></span></a>
-  <div class="nav-right"><span class="chip" id="who">Administratie</span><a class="btn" href="/">Terug</a></div>
+  <a class="brand" href="./"><span>SJB<b>quest</b></span></a>
+  <div class="nav-right"><span class="chip" id="who">Administratie</span><a class="btn" href="./">Terug</a></div>
 </header>
 <main class="admin">
   <div class="admin-card">
@@ -39,25 +40,27 @@
 </main>
 <script>
 const $ = s => document.querySelector(s);
+const BASE = location.pathname === "/quest" || location.pathname.startsWith("/quest/") ? "/quest" : "";
+const loginHref = BASE + "/auth/login?return=" + encodeURIComponent(BASE + "/admin");
 let rows = [];
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 
 async function load() {
   let s;
-  try { s = await (await fetch("/api/session?t=" + Date.now(), {credentials:"same-origin"})).json(); }
+  try { s = await (await fetch(BASE + "/api/session?t=" + Date.now(), {credentials:"same-origin"})).json(); }
   catch { $("#rows").innerHTML = '<p>API niet beschikbaar.</p>'; return; }
   if (!s.user) {
-    $("#rows").innerHTML = '<p>Je bent niet ingelogd. <a class="btn primary" href="/auth/login?return=/admin.html">Inloggen met Microsoft</a></p>';
+    $("#rows").innerHTML = `<p>Je bent niet ingelogd. <a class="btn primary" href="${loginHref}">Inloggen met Microsoft</a></p>`;
     return;
   }
   if (s.user.role !== "admin") {
     $("#who").textContent = s.user.name || s.user.email;
     $("#rows").innerHTML = `<p>Geen admin-toegang voor <b>${esc(s.user.email)}</b>. Vraag de eigenaar om je toe te voegen aan ADMIN_EMAILS.</p>
-      <p><a class="btn" href="/auth/logout">Uitloggen</a></p>`;
+      <p><a class="btn" href="${BASE}/auth/logout">Uitloggen</a></p>`;
     return;
   }
   $("#who").textContent = s.user.name || s.user.email;
-  rows = await (await fetch("/api/questions")).json();
+  rows = await (await fetch(BASE + "/api/questions")).json();
   render();
 }
 function render() {
@@ -84,13 +87,13 @@ function render() {
   });
   document.querySelectorAll("[data-save]").forEach(b => b.onclick = async () => {
     const i = +b.dataset.save;
-    await fetch("/api/questions", {method:"PUT",credentials:"same-origin",headers:{"content-type":"application/json"},body:JSON.stringify(rows[i])});
+    await fetch(BASE + "/api/questions", {method:"PUT",credentials:"same-origin",headers:{"content-type":"application/json"},body:JSON.stringify(rows[i])});
     b.textContent = "Opgeslagen!"; setTimeout(()=>b.textContent="Opslaan", 1400);
   });
   document.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
     const i = +b.dataset.del;
     if (!confirm(`Vraag ${rows[i].id} verwijderen?`)) return;
-    await fetch("/api/questions?id=" + rows[i].id, {method:"DELETE",credentials:"same-origin"});
+    await fetch(BASE + "/api/questions?id=" + rows[i].id, {method:"DELETE",credentials:"same-origin"});
     rows.splice(i,1); render();
   });
 }
@@ -99,16 +102,16 @@ $("#add").onclick = async () => {
   const q = {id, category:"Algemene kennis", difficulty:"medium", question:"Nieuwe vraag",
     answers:["Antwoord A","Antwoord B","Antwoord C","Juiste antwoord"], correct:3,
     explanation:"Uitleg", suitable:["quiz"]};
-  await fetch("/api/questions", {method:"POST",credentials:"same-origin",headers:{"content-type":"application/json"},body:JSON.stringify(q)});
+  await fetch(BASE + "/api/questions", {method:"POST",credentials:"same-origin",headers:{"content-type":"application/json"},body:JSON.stringify(q)});
   rows.push(q); render();
 };
 $("#download").onclick = async () => {
-  const data = await (await fetch("/api/export", {credentials:"same-origin"})).json();
+  const data = await (await fetch(BASE + "/api/export", {credentials:"same-origin"})).json();
   const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
   a.download = "questionsdata.json"; a.click(); URL.revokeObjectURL(a.href);
 };
-load().catch(() => { location.href = "/auth/login?return=/admin.html"; });
+load().catch(() => { location.href = loginHref; });
 </script>
 </body>
 </html>

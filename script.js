@@ -1,6 +1,7 @@
 
 const SJ = (() => {
   const games = {};
+  const BASE = window.SJ_BASE || "";
   const state = { xp:0, correct:0, bestCombo:0, medals:[], sound:false, user:null };
   let saveT;
   const TITLES = [[0,"Bijbelbeginner"],[100,"Sacramentenkenner"],[250,"Feestenexpert"],[500,"Geloofsverkenner"],[900,"Religieuze allesweter"]];
@@ -27,14 +28,15 @@ const SJ = (() => {
     menu.querySelector('[data-a=logout]').hidden = !state.user;
     menu.querySelector('[data-a=profile]').hidden = !state.user;
     menu.querySelector('[data-a=admin]').hidden = state.user?.role !== "admin";
+    menu.querySelector('[data-a=admin]').href = BASE + "/admin";
   }
   async function loadSession(){
     try{
-      const r = await fetch("/api/session?t=" + Date.now(),{credentials:"same-origin"});
+      const r = await fetch(BASE + "/api/session?t=" + Date.now(),{credentials:"same-origin"});
       const d = await r.json();
       state.user = d.user || null;
       if(state.user){
-        const p = await (await fetch("/api/progress",{credentials:"same-origin"})).json();
+        const p = await (await fetch(BASE + "/api/progress",{credentials:"same-origin"})).json();
         state.xp = p.xp || 0; state.correct = p.correct || 0;
         state.bestCombo = p.best_combo || 0;
         try{ state.medals = JSON.parse(p.medals || "[]"); }catch{ state.medals = []; }
@@ -46,7 +48,7 @@ const SJ = (() => {
     if(!state.user) return;
     clearTimeout(saveT);
     saveT = setTimeout(() => {
-      fetch("/api/progress",{method:"POST",credentials:"same-origin",headers:{"content-type":"application/json"},
+      fetch(BASE + "/api/progress",{method:"POST",credentials:"same-origin",headers:{"content-type":"application/json"},
         body:JSON.stringify({xp:state.xp,correct:state.correct,best_combo:state.bestCombo,medals:state.medals})}).catch(()=>{});
     }, 400);
   }
@@ -116,9 +118,10 @@ const SJ = (() => {
     $("#accountMenu").addEventListener("click", e => {
       const a = e.target.closest("[data-a]"); if(!a) return;
       const action = a.dataset.a;
-      if(action === "login") location.href = "/auth/login?return=" + encodeURIComponent(location.pathname + location.search);
-      if(action === "logout") location.href = "/auth/logout";
-      if(action === "profile") location.href = "/account.html";
+      if(action === "login") location.href = BASE + "/auth/login?return=" + encodeURIComponent(location.pathname + location.search);
+      if(action === "logout") location.href = BASE + "/auth/logout";
+      if(action === "profile") location.href = BASE + "/account";
+      if(action === "admin") { e.preventDefault(); location.href = BASE + "/admin"; }
     });
     document.addEventListener("click", e => {
       if(!e.target.closest("#account")) { const m = $("#accountMenu"); if(m){ m.hidden = true; $("#accountBtn").setAttribute("aria-expanded","false"); } }

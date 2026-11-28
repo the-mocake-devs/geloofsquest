@@ -1,16 +1,29 @@
 
 const AUTH = "https://login.microsoftonline.com";
 const SESSION_DAYS = 7;
+const MOUNT = "/quest";
 let jwksCache = { at: 0, keys: [] };
+
+function stripMount(pathname) {
+  if (pathname === MOUNT) return "/";
+  if (pathname.startsWith(MOUNT + "/")) return pathname.slice(MOUNT.length);
+  return pathname;
+}
+function safeReturn(value) {
+  const p = String(value || "");
+  if (!p.startsWith("/") || p.startsWith("//")) return MOUNT + "/";
+  if (p === MOUNT || p.startsWith(MOUNT + "/")) return p.slice(0, 200);
+  return (MOUNT + p).slice(0, 200);
+}
 
 const json = (data, status = 200, headers = {}) => new Response(JSON.stringify(data), {
   status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", ...headers }
 });
-const redirect = (url, headers = {}) => {
+const redirect = (url, headers = {}, status = 302) => {
   const h = new Headers(headers);
   h.set("Location", url);
   if (!h.has("cache-control")) h.set("cache-control", "no-store");
-  return new Response(null, { status: 302, headers: h });
+  return new Response(null, { status, headers: h });
 };
 const safeParse = (s, fallback) => { try { return JSON.parse(s); } catch { return fallback; } };
 
@@ -86,12 +99,12 @@ async function requireAdmin(req, env) {
 async function login(req, url, env) {
   const verifier = random(64), state = random(), nonce = random();
   const challenge = b64url(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier))));
-  const returnTo = (url.searchParams.get("return") || "/").slice(0, 200);
+  const returnTo = safeReturn(url.searchParams.get("return"));
   const oauth = b64url(new TextEncoder().encode(JSON.stringify({ v: verifier, s: state, n: nonce, r: returnTo })));
   const params = new URLSearchParams({
     client_id: env.MICROSOFT_CLIENT_ID,
     response_type: "code",
-    redirect_uri: `${url.origin}/auth/callback`,
+    redirect_uri: `${url.origin}${MOUNT}/auth/callback`,
     scope: "openid profile email",
     state, nonce,
     code_challenge: challenge,
@@ -116,7 +129,7 @@ async function callback(req, url, env) {
       client_id: env.MICROSOFT_CLIENT_ID,
       grant_type: "authorization_code",
       code,
-      redirect_uri: `${url.origin}/auth/callback`,
+      redirect_uri: `${url.origin}${MOUNT}/auth/callback`,
       code_verifier: o.v,
       scope: "openid profile email"
     })
@@ -140,7 +153,7 @@ async function callback(req, url, env) {
   const session = await sign({ sub, email, name, role, exp: Math.floor(Date.now() / 1000) + SESSION_DAYS * 86400 },
     env.SESSION_SECRET || (env.MICROSOFT_CLIENT_ID + "-dev"));
   const headers = new Headers();
-  headers.set("Location", o.r || "/");
+  headers.set("Location", safeReturn(o.r));
   headers.set("cache-control", "no-store");
   headers.append("Set-Cookie", setCookie("sq_session", session, SESSION_DAYS * 86400, req));
   headers.append("Set-Cookie", setCookie("oauth", "", 0, req));
@@ -201,12 +214,17 @@ export default {
   async fetch(req, env) {
     const url = new URL(req.url);
     try {
-      if (url.pathname === "/auth/login") return login(req, url, env);
-      if (url.pathname === "/auth/callback") return callback(req, url, env);
-      if (url.pathname === "/auth/logout") {
-        return redirect("/", { "set-cookie": setCookie("sq_session", "", 0, req) });
+      if (url.pathname !== MOUNT && !url.pathname.startsWith(MOUNT + "/")) {
+        return redirect(MOUNT + (url.pathname === "/" ? "/" : url.pathname) + url.search);
       }
-      if (url.pathname === "/api/session") {
+      if (url.pathname === MOUNT) return redirect(MOUNT + "/", {}, 301);
+      const path = stripMount(url.pathname);
+      if (path === "/auth/login") return login(req, url, env);
+      if (path === "/auth/callback") return callback(req, url, env);
+      if (path === "/auth/logout") {
+        return redirect(MOUNT + "/", { "set-cookie": setCookie("sq_session", "", 0, req) });
+      }
+      if (path === "/api/session") {
         if (url.searchParams.has("debug")) {
           const raw = cookies(req).sq_session;
           const verified = await currentUser(req, env);
@@ -223,7 +241,7 @@ export default {
           avatar: row?.avatar || null
         }});
       }
-      if (url.pathname === "/api/profile") {
+      if (path === "/api/profile") {
         const user = await currentUser(req, env);
         if (!user) return json({ error: "Not signed in" }, 401);
         if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
@@ -234,9 +252,9 @@ export default {
         await env.DB.prepare("UPDATE users SET display_name=?, avatar=? WHERE microsoft_sub=?").bind(name, avatar, user.sub).run();
         return json({ ok: true, display_name: name, avatar });
       }
-      if (url.pathname === "/api/progress") return progress(req, env);
-      if (url.pathname === "/api/questions") return questions(req, env, url);
-      if (url.pathname === "/api/export") {
+      if (path === "/api/progress") return progress(req, env);
+      if (path === "/api/questions") return questions(req, env, url);
+      if (path === "/api/export") {
         const denied = await requireAdmin(req, env);
         if (denied) return denied;
         const rows = await env.DB.prepare("SELECT id, category, difficulty, question, answers, correct, explanation, suitable FROM questions ORDER BY id").all();

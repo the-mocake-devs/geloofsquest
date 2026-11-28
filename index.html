@@ -3,9 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta property="og:image" content="https://the-mocake-devs.github.io/geloofsquest/logo.png" />
-<meta property="og:title" content="SJBquest" />
-<meta property="og:description" content="Leer. Speel. Ontdek." />
+<meta name="description" content="Speel SJBquest: quiz, memory en Faith Runner. Leer over sacramenten, de Bijbel, feesten en wereldgodsdiensten terwijl je XP verzamelt.">
+<link rel="canonical" href="https://sjbijbel.app/quest/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://sjbijbel.app/quest/">
+<meta property="og:image" content="https://sjbijbel.app/quest/logo.png">
+<meta property="og:title" content="SJBquest – Leer. Speel. Ontdek.">
+<meta property="og:description" content="Leer. Speel. Ontdek. Verzamel XP in quiz, memory en Faith Runner.">
 <title>SJBquest – Leer. Speel. Ontdek.</title>
 <link rel="icon" href="logo.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,7 +33,7 @@
         <div class="account-head" id="accountHead">Niet ingelogd</div>
         <button data-a="login">Inloggen met Microsoft</button>
         <button data-a="profile">Account instellingen</button>
-        <a href="/admin.html" data-a="admin" hidden>Vragen beheren</a>
+        <a href="#" data-a="admin" hidden>Vragen beheren</a>
         <button data-a="logout">Uitloggen</button>
       </div>
     </div>
@@ -67,6 +71,7 @@
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <canvas id="confetti"></canvas>
 
+<script>window.SJ_BASE = location.pathname === "/quest" || location.pathname.startsWith("/quest/") ? "/quest" : "";</script>
 <script src="questions.js"></script>
 <script src="script.js"></script>
 

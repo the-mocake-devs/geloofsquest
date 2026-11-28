@@ -1,4 +1,6 @@
 
+const BASE = window.SJ_BASE || "";
+
 const CATEGORIES = ["Sacramenten","Bijbel","Jezus","Feesten","Tien geboden","Parabels","Symbolen","Wereldgodsdiensten",
   "Godsdiensten","Christendom","Levensbeschouwingen","Islam","Hindoeïsme en boeddhisme","Algemene kennis"];
 
@@ -41,7 +43,7 @@ function convertQuestions(data) {
 
 async function loadQuestions() {
   try {
-    const api = await fetch("/api/questions");
+    const api = await fetch(BASE + "/api/questions");
     if (api.ok) {
       const rows = await api.json();
       if (Array.isArray(rows) && rows.length) {

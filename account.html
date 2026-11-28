@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Account · SJBquest</title>
+<meta name="robots" content="noindex">
 <link href="https://cdn.lineicons.com/5.2/line/lineicons.css" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <style>
@@ -20,8 +21,8 @@
 </head>
 <body>
 <header class="nav">
-  <a class="brand" href="/"><span>SJB<b>quest</b></span></a>
-  <div class="nav-right"><a class="btn" href="/">Terug</a></div>
+  <a class="brand" href="./"><span>SJB<b>quest</b></span></a>
+  <div class="nav-right"><a class="btn" href="./">Terug</a></div>
 </header>
 <main class="acct">
   <div class="acct-card">
@@ -34,14 +35,17 @@
     <input type="file" id="file" accept="image/*">
     <div class="acct-actions">
       <button class="btn primary" id="save">Opslaan</button>
-      <a class="btn" href="/auth/logout">Uitloggen</a>
+      <a class="btn" href="#" id="logout">Uitloggen</a>
     </div>
     <div id="acctStatus"></div>
   </div>
 </main>
 <script>
 const $ = s => document.querySelector(s);
+const BASE = location.pathname === "/quest" || location.pathname.startsWith("/quest/") ? "/quest" : "";
+const loginHref = BASE + "/auth/login?return=" + encodeURIComponent(BASE + "/account");
 let avatar = null, email = "";
+$("#logout").href = BASE + "/auth/logout";
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 
 function showAvatar(src) {
@@ -49,9 +53,9 @@ function showAvatar(src) {
   $("#pfp").innerHTML = src ? `<img src="${src}" alt="Profielfoto">` : '<i class="lni lni-user-4"></i>';
 }
 async function load() {
-  const r = await fetch("/api/session?t=" + Date.now(), {credentials:"same-origin"});
+  const r = await fetch(BASE + "/api/session?t=" + Date.now(), {credentials:"same-origin"});
   const d = await r.json();
-  if (!d.user) { $("#title").textContent = "Niet ingelogd"; $("#mail").innerHTML = '<a class="btn primary" href="/auth/login?return=/account.html">Inloggen met Microsoft</a>'; return; }
+  if (!d.user) { $("#title").textContent = "Niet ingelogd"; $("#mail").innerHTML = `<a class="btn primary" href="${loginHref}">Inloggen met Microsoft</a>`; return; }
   email = d.user.email;
   $("#title").textContent = d.user.name || "Account";
   $("#mail").textContent = d.user.email + " · " + d.user.role;
@@ -73,7 +77,7 @@ $("#file").onchange = e => {
   reader.readAsDataURL(f);
 };
 $("#save").onclick = async () => {
-  const res = await fetch("/api/profile", {method:"POST",credentials:"same-origin",headers:{"content-type":"application/json"},
+  const res = await fetch(BASE + "/api/profile", {method:"POST",credentials:"same-origin",headers:{"content-type":"application/json"},
     body:JSON.stringify({display_name:$("#name").value.trim(), avatar})});
   const d = await res.json();
   $("#acctStatus").textContent = res.ok ? "Opgeslagen!" : (d.error || "Opslaan mislukt");

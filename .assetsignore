@@ -3,6 +3,7 @@
 node_modules
 worker
 wrangler.jsonc
-schema.sql
-seed.sql
+*.sql
+README.md
 README-Auth.md
+.assetsignore

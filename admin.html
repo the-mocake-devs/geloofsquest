@@ -53,7 +53,7 @@ async function load() {
     $("#rows").innerHTML = `<p>Je bent niet ingelogd. <a class="btn primary" href="${loginHref}">Inloggen met Microsoft</a></p>`;
     return;
   }
-  if (s.user.role !== "admin") {
+  if (!["admin", "opadmin"].includes(s.user.role)) {
     $("#who").textContent = s.user.name || s.user.email;
     $("#rows").innerHTML = `<p>Je bent geen leerkracht!<b>${esc(s.user.email)}</b>. Vraag Thijs en Pim om je toe te voegen als Leerkracht: contact@sjbijbel.app</p>
       <p><a class="btn" href="${BASE}/auth/logout">Uitloggen</a></p>`;

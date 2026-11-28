@@ -27,8 +27,11 @@ const SJ = (() => {
     menu.querySelector('[data-a=login]').hidden = !!state.user;
     menu.querySelector('[data-a=logout]').hidden = !state.user;
     menu.querySelector('[data-a=profile]').hidden = !state.user;
-    menu.querySelector('[data-a=admin]').hidden = state.user?.role !== "admin";
+    menu.querySelector('[data-a=admin]').hidden = !["admin", "opadmin"].includes(state.user?.role);
     menu.querySelector('[data-a=admin]').href = BASE + "/admin";
+
+    menu.querySelector('[data-a=opadmin]').hidden = state.user?.role !== "opadmin";
+    menu.querySelector('[data-a=opadmin]').href = BASE + "/panel/";
   }
   async function loadSession(){
     try{

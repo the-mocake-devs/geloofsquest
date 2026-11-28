@@ -33,9 +33,88 @@ const SJ = (() => {
     menu.querySelector('[data-a=opadmin]').hidden = state.user?.role !== "opadmin";
     menu.querySelector('[data-a=opadmin]').href = BASE + "/panel/";
   }
+  
+async function checkSessionStatus() {
+  try {
+    const response = await fetch(BASE + "/api/session-status", {
+      credentials: "same-origin",
+      cache: "no-store"
+    });
+
+    const data = await response.json();
+
+    if (data.status !== "banned" && data.status !== "revoked") return;
+
+    state.user = null;
+
+    const overlay = document.createElement("div");
+    overlay.className = "session-notice-overlay";
+
+    let duration = "Permanent";
+
+    if (data.status === "banned" && data.banned_until) {
+      const remaining = Math.max(0, Date.parse(data.banned_until) - Date.now());
+      const days = Math.floor(remaining / 86400000);
+      const hours = Math.floor((remaining % 86400000) / 3600000);
+      const minutes = Math.floor((remaining % 3600000) / 60000);
+
+      duration = `${days} dagen, ${hours} uur en ${minutes} minuten`;
+    }
+
+    overlay.innerHTML = `
+      <div class="session-notice">
+        <div class="session-notice-icon">!</div>
+        <span class="session-notice-label">SJBQUEST · ACCOUNTMELDING</span>
+        <h1>${data.status === "banned" ? "Je bent geband" : "Je sessie is ingetrokken"}</h1>
+        <p>
+          ${data.status === "banned"
+            ? "Je hebt tijdelijk of permanent geen toegang meer tot SJBquest."
+            : "Een beheerder heeft je huidige sessie ingetrokken. Je moet opnieuw inloggen."}
+        </p>
+        <div class="session-notice-detail">
+          <span>REDEN</span>
+          <strong></strong>
+        </div>
+        ${data.status === "banned" ? `
+          <div class="session-notice-detail">
+            <span>DUUR</span>
+            <strong class="session-duration"></strong>
+          </div>
+        ` : ""}
+        <button class="session-notice-button">Begrepen</button>
+      </div>
+    `;
+
+    overlay.querySelector(".session-notice-detail strong").textContent =
+      data.reason || "Geen reden opgegeven.";
+
+    const durationElement = overlay.querySelector(".session-duration");
+    if (durationElement) {
+      durationElement.textContent = data.permanent ? "Permanent" : duration;
+    }
+
+    document.body.appendChild(overlay);
+
+    overlay.querySelector("button").onclick = () => {
+      overlay.remove();
+      location.href = BASE + "/";
+    };
+
+    syncAccountMenu();
+  } catch (error) {
+    console.error("Session status check failed:", error);
+  }
+}
+
   async function loadSession(){
     try{
-      const r = await fetch(BASE + "/api/session?t=" + Date.now(),{credentials:"same-origin"});
+      await checkSessionStatus();
+
+if (state.user === null) {
+  const statusResponse = await fetch(BASE + "/api/session?t=" + Date.now(), {
+    credentials: "same-origin"
+  });
+}
       const d = await r.json();
       state.user = d.user || null;
       if(state.user){

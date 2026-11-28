@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Moderatie · SJBquest</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.lineicons.com/5.2/line/lineicons.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="panel.css">
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="./"><span>SJB<b>quest</b></span></a>
+    <div class="nav-right">
+      <span class="chip" id="panelUser">Moderatie</span>
+      <a class="btn" href="./">Terug naar de quest</a>
+    </div>
+  </header>
+
+  <main class="mod-main">
+    <section class="mod-heading">
+      <div>
+        <span class="mod-eyebrow">BEHEER & VEILIGHEID</span>
+        <h1>Moderatiepaneel</h1>
+        <p>Beheer spelers, bekijk hun voortgang en volg moderatieacties op.</p>
+      </div>
+      <button class="btn primary" id="refreshBtn"><i class="lni lni-reload"></i> Vernieuwen</button>
+    </section>
+
+    <div class="mod-alert" id="alert" role="status" hidden></div>
+
+    <section class="mod-stats" aria-label="Statistieken">
+      <article class="mod-stat"><span class="mod-stat-icon blue"><i class="lni lni-users"></i></span><div><span class="mod-stat-label">Geregistreerde spelers</span><strong id="statPlayers">—</strong></div></article>
+      <article class="mod-stat"><span class="mod-stat-icon green"><i class="lni lni-trending-up"></i></span><div><span class="mod-stat-label">Gemiddeld niveau</span><strong id="statLevel">—</strong></div></article>
+      <article class="mod-stat"><span class="mod-stat-icon yellow"><i class="lni lni-star"></i></span><div><span class="mod-stat-label">Totale XP</span><strong id="statXp">—</strong></div></article>
+      <article class="mod-stat"><span class="mod-stat-icon red"><i class="lni lni-shield"></i></span><div><span class="mod-stat-label">Actieve bans</span><strong id="statBans">—</strong></div></article>
+    </section>
+
+    <section class="mod-card">
+      <div class="mod-card-head">
+        <div>
+          <h2>Spelers</h2>
+          <p>Zoek spelers en beheer hun toegang tot SJBquest.</p>
+        </div>
+        <label class="mod-search"><i class="lni lni-search-1"></i><input id="playerSearch" type="search" placeholder="Zoek op naam, e-mail of ID…"></label>
+      </div>
+      <div class="mod-table-wrap">
+        <table class="mod-table">
+          <thead><tr><th>Speler</th><th>Voortgang</th><th>Activiteit</th><th>Status</th><th>Acties</th></tr></thead>
+          <tbody id="playersBody"><tr><td colspan="5" class="mod-empty">Spelers laden…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="mod-mobile-list" id="playersMobile"></div>
+    </section>
+
+    <section class="mod-card">
+      <div class="mod-card-head">
+        <div><h2>Moderatiegeschiedenis</h2><p>De meest recente acties van moderators en beheerders.</p></div>
+      </div>
+      <div class="mod-table-wrap">
+        <table class="mod-table">
+          <thead><tr><th>Actie</th><th>Speler-ID</th><th>Moderator</th><th>Reden</th><th>Datum</th></tr></thead>
+          <tbody id="logsBody"><tr><td colspan="5" class="mod-empty">Logboek laden…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+    <p class="mod-footnote">Spelers worden als recent actief getoond wanneer hun laatste API-activiteit minder dan vijf minuten geleden was. Dit is geen realtime online-indicator.</p>
+  </main>
+
+  <script>window.SJ_BASE = location.pathname === "/quest" || location.pathname.startsWith("/quest/") ? "/quest" : "";</script>
+  <script src="panel.js"></script>
+</body>
+</html>

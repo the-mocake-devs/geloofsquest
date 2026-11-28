@@ -71,10 +71,10 @@ function render() {
       <select data-k="difficulty">
         ${["easy","medium","hard"].map(d=>`<option value="${d}" ${q.difficulty===d?"selected":""}>${d}</option>`).join("")}
       </select>
-      <input type="number" min="0" max="3" data-k="correct" value="${esc(q.correct)}" aria-label="Juiste index">
     </div>
     <label>Vraag</label><input data-k="question" value="${esc(q.question)}">
     <label>Antwoorden (één per regel, 4 stuks)</label><textarea data-k="answers">${esc((q.answers||[]).join("\n"))}</textarea>
+    <label>Juist Antwoord (cijfer: 0,1,2,3)</label><input type="number" min="0" max="3" data-k="correct" value="${esc(q.correct)}" aria-label="bv. 2">
     <label>Uitleg</label><input data-k="explanation" value="${esc(q.explanation)}">
     <label>Geschikt voor (komma-gescheiden: quiz, memory, faithrunner)</label><input data-k="suitable" value="${esc((q.suitable||[]).join(", "))}">
     <div class="q-actions"><button data-save="${i}">Opslaan</button><button class="danger" data-del="${i}">Verwijderen</button></div>

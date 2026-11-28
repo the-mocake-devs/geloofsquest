@@ -1,0 +1,8 @@
+.git
+.wrangler
+node_modules
+worker
+wrangler.jsonc
+schema.sql
+seed.sql
+README-Auth.md

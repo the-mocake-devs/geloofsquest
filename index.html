@@ -16,13 +16,23 @@
 <body>
 <header class="nav">
   <a class="brand" href="#" data-go="home">
-    <!-- Eigen logo: zet je bestand in de map en vervang src (bv. logo.png) -->
+    
     <img id="logo" src="logo.png" alt="" onerror="this.style.display='none'">
     <span>SJB<b>quest</b></span>
   </a>
   <div class="nav-right">
     <span class="chip" id="navLevel">Niveau 1</span>
     <span class="chip xp" id="navXp">0 XP</span>
+    <div class="account" id="account">
+      <button class="icon-btn" id="accountBtn" aria-label="Account" title="Account" aria-expanded="false"><span id="accountFace"><i class="lni lni-user-4" aria-hidden="true"></i></span></button>
+      <div class="account-menu" id="accountMenu" hidden>
+        <div class="account-head" id="accountHead">Niet ingelogd</div>
+        <button data-a="login">Inloggen met Microsoft</button>
+        <button data-a="profile">Account instellingen</button>
+        <a href="/admin.html" data-a="admin" hidden>Vragen beheren</a>
+        <button data-a="logout">Uitloggen</button>
+      </div>
+    </div>
     <button class="icon-btn" id="soundBtn" aria-label="Geluid aan of uit" aria-pressed="false"><i class="lni lni-volume-mute" aria-hidden="true"></i></button>
   </div>
 </header>
@@ -59,7 +69,7 @@
 
 <script src="questions.js"></script>
 <script src="script.js"></script>
-<!-- Spelmodi: elk bestand registreert zichzelf via SJ.registerGame(...) -->
+
 <script src="games/quiz.js"></script>
 <script src="games/speed.js"></script>
 <script src="games/daily.js"></script>

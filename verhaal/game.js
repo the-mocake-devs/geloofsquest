@@ -16,7 +16,7 @@
     let n = 0; (function tick() { x.clearRect(0, 0, f.width, f.height); p.forEach(q => { q.x += q.vx; q.y += q.vy; x.fillStyle = q.c; x.fillRect(q.x, q.y, q.s, q.s); }); if (++n < 140) requestAnimationFrame(tick); else x.clearRect(0, 0, f.width, f.height); })();
   }
 
-  /* ---------- beweging ---------- */
+  
   const pos = e => { const r = cv.getBoundingClientRect(); return {x: (e.clientX - r.left) * W / r.width, y: (e.clientY - r.top) * H / r.height}; };
   let down = false;
   cv.onpointerdown = e => { down = true; target = pos(e); };
@@ -42,7 +42,7 @@
     }
   }
 
-  /* ---------- tekenen ---------- */
+  
   function draw() {
     const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "#8fc59b"); g.addColorStop(1, "#6fae82"); c.fillStyle = g; c.fillRect(0, 0, W, H);
     c.fillStyle = "#e9dcae"; [[100,120,24,100],[100,222,500,24],[505,120,24,100],[100,340,24,12],[505,340,24,12],[300,40,50,0]].forEach(r => c.fillRect(...r));
@@ -73,7 +73,7 @@
   }
   (function loop(now) { const dt = Math.min((now - last) / 1000, .05); last = now; t += dt; if (!open) update(dt); draw(); requestAnimationFrame(loop); })(last);
 
-  /* ---------- minigames ---------- */
+  
   const close = () => { open = false; ov.classList.add("off"); };
   const show = html => { open = true; ov.classList.remove("off"); mini.innerHTML = html; };
   const shake = el => { el.classList.remove("shake"); void el.offsetWidth; el.classList.add("shake"); };

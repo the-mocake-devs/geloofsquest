@@ -1,4 +1,4 @@
-/* Scène-engine: alles in het geheugen, niets wordt opgeslagen. */
+
 const G = {trust:0, xp:0, journal:[]};
 const $ = s => document.querySelector(s);
 const shuffle = a => a.map(x => [Math.random(), x]).sort((p, q) => p[0] - q[0]).map(x => x[1]);

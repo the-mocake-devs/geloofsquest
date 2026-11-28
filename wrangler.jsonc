@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "geloofsquest",
+  "compatibility_date": "2026-11-26",
+  "main": "worker/index.js",
+  "assets": {
+    "directory": ".",
+    "not_found_handling": "404-page"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "geloofsquest",
+      "database_id": "4a55ef0d-2546-42aa-8a02-43b474de6d6f"
+    }
+  ],
+  "vars": {
+    "MICROSOFT_CLIENT_ID": "aca053a9-6d35-445f-b0fd-0d0502275ad6",
+    "MICROSOFT_TENANT": "common",
+    "ADMIN_EMAILS": "pimwillekens@gmail.com,anik.vandenheuvel@sjbmalle.be"
+  }
+}

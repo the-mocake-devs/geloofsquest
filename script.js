@@ -1,7 +1,8 @@
-/* SJ = kern van de game: voortgang (enkel in geheugen), geluid, confetti, spelregisterr. */
+
 const SJ = (() => {
   const games = {};
-  const state = { xp:0, correct:0, bestCombo:0, medals:[], sound:false };
+  const state = { xp:0, correct:0, bestCombo:0, medals:[], sound:false, user:null };
+  let saveT;
   const TITLES = [[0,"Bijbelbeginner"],[100,"Sacramentenkenner"],[250,"Feestenexpert"],[500,"Geloofsverkenner"],[900,"Religieuze allesweter"]];
   const $ = s => document.querySelector(s);
   const ico = name => `<i class="lni lni-${name}" aria-hidden="true"></i>`;
@@ -9,6 +10,46 @@ const SJ = (() => {
   const title = () => TITLES.filter(t => state.xp >= t[0]).pop()[1];
 
   function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(toast.id);toast.id=setTimeout(()=>t.classList.remove("show"),2600);}
+
+  
+  function syncAccountMenu(){
+    const face = $("#accountFace"), head = $("#accountHead"), menu = $("#accountMenu");
+    if(!face || !head || !menu) return;
+    face.innerHTML = state.user?.avatar
+      ? `<img src="${state.user.avatar}" alt="">`
+      : ico(state.user ? "user-4" : "user-4");
+    $("#accountBtn").classList.toggle("active", !!state.user);
+    $("#accountBtn").title = state.user ? `Ingelogd als ${state.user.name}` : "Inloggen met Microsoft";
+    head.innerHTML = state.user
+      ? `<b>${state.user.name || state.user.email}</b>${state.user.email} · ${state.user.role}`
+      : "Niet ingelogd";
+    menu.querySelector('[data-a=login]').hidden = !!state.user;
+    menu.querySelector('[data-a=logout]').hidden = !state.user;
+    menu.querySelector('[data-a=profile]').hidden = !state.user;
+    menu.querySelector('[data-a=admin]').hidden = state.user?.role !== "admin";
+  }
+  async function loadSession(){
+    try{
+      const r = await fetch("/api/session?t=" + Date.now(),{credentials:"same-origin"});
+      const d = await r.json();
+      state.user = d.user || null;
+      if(state.user){
+        const p = await (await fetch("/api/progress",{credentials:"same-origin"})).json();
+        state.xp = p.xp || 0; state.correct = p.correct || 0;
+        state.bestCombo = p.best_combo || 0;
+        try{ state.medals = JSON.parse(p.medals || "[]"); }catch{ state.medals = []; }
+      }
+    }catch(e){  }
+    render(); syncAccountMenu();
+  }
+  function saveProgress(){
+    if(!state.user) return;
+    clearTimeout(saveT);
+    saveT = setTimeout(() => {
+      fetch("/api/progress",{method:"POST",credentials:"same-origin",headers:{"content-type":"application/json"},
+        body:JSON.stringify({xp:state.xp,correct:state.correct,best_combo:state.bestCombo,medals:state.medals})}).catch(()=>{});
+    }, 400);
+  }
 
   let ctx;
   function beep(freq=660,dur=.12){
@@ -33,7 +74,7 @@ const SJ = (() => {
     if(level()>oldLevel){toast("Niveau "+level()+" bereikt!");confetti();}
     if(state.correct>=10&&!state.medals.some(m=>m.key==="correct10"))state.medals.push({key:"correct10", icon:"crown-3", text:"10 juist"});
     if(state.bestCombo>=5&&!state.medals.some(m=>m.key==="combo5"))state.medals.push({key:"combo5", icon:"fireworks", text:"Combo 5"});
-    render();
+    render(); saveProgress();
   }
 
   function render(){
@@ -52,14 +93,14 @@ const SJ = (() => {
 
   function registerGame(key,def){games[key]=def;}
 
-  function pick(filter={}){ // helper voor alle spelmodi
+  function pick(filter={}){ 
     const bank = Array.isArray(questions) ? questions : [];
     let list=bank.filter(q=>(!filter.category||q.category===filter.category)&&(!filter.difficulty||q.difficulty===filter.difficulty)&&(!filter.game||(q.suitable||["quiz"]).includes(filter.game)));
     return list.map(q=>[Math.random(),q]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]).slice(0,filter.count||list.length);
   }
 
   function init(){
-    // Klikken moet altijd werken, ook als de vragenbank niet geladen is.
+    
     document.addEventListener("click",e=>{const p=e.target.closest("[data-play]");if(p)return play(p.dataset.play);if(e.target.closest("[data-go=home]")){e.preventDefault();home();}});
     const bank = Array.isArray(questions) ? questions : [];
     const cats = Array.isArray(CATEGORIES) ? CATEGORIES : [];
@@ -68,7 +109,21 @@ const SJ = (() => {
     $("#modeGrid").innerHTML=modes.map(m=>`<button class="mode ${games[m[0]]?"":"soon"}" data-play="${m[0]}"><span class="ico">${ico(m[1])}</span><h3>${m[2]}</h3><p>${m[3]}</p>${games[m[0]]?"":'<span class="tag">Binnenkort</span>'}</button>`).join("");
     $("#topicList").innerHTML=cats.map(c=>`<span class="topic">${c}<small>${bank.filter(q=>q.category===c).length}</small></span>`).join("");
     $("#soundBtn").onclick=function(){state.sound=!state.sound;this.innerHTML=ico(state.sound?"volume-high":"volume-mute");this.setAttribute("aria-pressed",state.sound);beep(880);};
-    render();
+    $("#accountBtn").onclick = () => {
+      const m = $("#accountMenu"); m.hidden = !m.hidden;
+      $("#accountBtn").setAttribute("aria-expanded", String(!m.hidden));
+    };
+    $("#accountMenu").addEventListener("click", e => {
+      const a = e.target.closest("[data-a]"); if(!a) return;
+      const action = a.dataset.a;
+      if(action === "login") location.href = "/auth/login?return=" + encodeURIComponent(location.pathname + location.search);
+      if(action === "logout") location.href = "/auth/logout";
+      if(action === "profile") location.href = "/account.html";
+    });
+    document.addEventListener("click", e => {
+      if(!e.target.closest("#account")) { const m = $("#accountMenu"); if(m){ m.hidden = true; $("#accountBtn").setAttribute("aria-expanded","false"); } }
+    });
+    render(); loadSession();
   }
   return {init,registerGame,addXp,toast,beep,confetti,pick,home,ico,state};
 })();

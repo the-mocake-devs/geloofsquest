@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Account · SJBquest</title>
+<link href="https://cdn.lineicons.com/5.2/line/lineicons.css" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.acct{max-width:520px;margin:0 auto;padding-bottom:60px}
+.acct-card{background:#fff;border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);padding:26px;margin-top:22px;text-align:center}
+.acct-pfp{width:96px;height:96px;border-radius:50%;object-fit:cover;background:var(--blue-light);display:grid;place-items:center;margin:0 auto 14px;border:3px solid #fff;box-shadow:0 6px 18px rgba(13,41,75,.15);overflow:hidden}
+.acct-pfp img{width:100%;height:100%;object-fit:cover}
+.acct-pfp .lni{font-size:38px;color:var(--blue)}
+.acct-card label{display:block;text-align:left;font-size:.75rem;color:var(--muted);margin:14px 0 5px;text-transform:uppercase;letter-spacing:.06em}
+.acct-card input[type=text]{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:12px;font:inherit}
+.acct-actions{display:flex;gap:8px;justify-content:center;margin-top:20px;flex-wrap:wrap}
+#acctStatus{color:var(--green);font-weight:700;min-height:1.2em;margin-top:12px}
+</style>
+</head>
+<body>
+<header class="nav">
+  <a class="brand" href="/"><span>SJB<b>quest</b></span></a>
+  <div class="nav-right"><a class="btn" href="/">Terug</a></div>
+</header>
+<main class="acct">
+  <div class="acct-card">
+    <div class="acct-pfp" id="pfp"><i class="lni lni-user-4"></i></div>
+    <h2 id="title">Account</h2>
+    <p class="muted" id="mail"></p>
+    <label>Weergavenaam</label>
+    <input type="text" id="name" maxlength="80" placeholder="Je naam">
+    <label>Profielfoto</label>
+    <input type="file" id="file" accept="image/*">
+    <div class="acct-actions">
+      <button class="btn primary" id="save">Opslaan</button>
+      <a class="btn" href="/auth/logout">Uitloggen</a>
+    </div>
+    <div id="acctStatus"></div>
+  </div>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+let avatar = null, email = "";
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+
+function showAvatar(src) {
+  avatar = src || null;
+  $("#pfp").innerHTML = src ? `<img src="${src}" alt="Profielfoto">` : '<i class="lni lni-user-4"></i>';
+}
+async function load() {
+  const r = await fetch("/api/session?t=" + Date.now(), {credentials:"same-origin"});
+  const d = await r.json();
+  if (!d.user) { $("#title").textContent = "Niet ingelogd"; $("#mail").innerHTML = '<a class="btn primary" href="/auth/login?return=/account.html">Inloggen met Microsoft</a>'; return; }
+  email = d.user.email;
+  $("#title").textContent = d.user.name || "Account";
+  $("#mail").textContent = d.user.email + " · " + d.user.role;
+  $("#name").value = d.user.name || "";
+  showAvatar(d.user.avatar);
+}
+$("#file").onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement("canvas"); c.width = c.height = 128;
+      c.getContext("2d").drawImage(img, 0, 0, 128, 128);
+      showAvatar(c.toDataURL("image/jpeg", .8));
+    };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(f);
+};
+$("#save").onclick = async () => {
+  const res = await fetch("/api/profile", {method:"POST",credentials:"same-origin",headers:{"content-type":"application/json"},
+    body:JSON.stringify({display_name:$("#name").value.trim(), avatar})});
+  const d = await res.json();
+  $("#acctStatus").textContent = res.ok ? "Opgeslagen!" : (d.error || "Opslaan mislukt");
+  if (res.ok) $("#title").textContent = d.display_name;
+};
+load().catch(() => { $("#title").textContent = "Account niet beschikbaar"; });
+</script>
+</body>
+</html>

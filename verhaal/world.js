@@ -1,8 +1,8 @@
-/* WERELD + MINIGAMEDATA. Pas hier gebouwen, posities en inhoud aan.
-   Minigame-types: order | sort | match. (Finale: FINALE.questions) */
+
+
 const WORLD = {
   W: 640, H: 420,
-  water: [[300,90,40,130],[300,280,40,140]],            // rivier met brug tussen y=220 en 280
+  water: [[300,90,40,130],[300,280,40,140]],            
   trees: [[40,200],[250,150],[390,160],[600,220],[250,385],[595,395],[60,380]],
   atlas: {x: 320, y: 48},
   stations: [

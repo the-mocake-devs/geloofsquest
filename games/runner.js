@@ -1,4 +1,4 @@
-/* FAITH RUNNER — pseudo-3D endless runner met vraag-poorten. */
+
 (() => {
   const W = 420, H = 720, CX = W / 2;
   const HORIZON = H * 0.30, GROUND = H * 0.90, FOCAL = 260, LANE_W = 108;
@@ -11,12 +11,12 @@
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const shuffle = a => a.map(x => [Math.random(), x]).sort((p, q) => p[0] - q[0]).map(x => x[1]);
 
-  /* --- perspectief: z = afstand voor de speler, 0 = bij de speler --- */
+  
   const K = z => FOCAL / (FOCAL + Math.max(z, -FOCAL * .55));
   const PY = z => HORIZON + (GROUND - HORIZON) * K(z);
   const PX = (coord, z) => CX + coord * LANE_W * K(z);
 
-  /* --- audio: rijkere geluiden dan SJ.beep, maar zelfde aan/uit-schakelaar --- */
+  
   function tone(freq, dur = .1, delay = 0, type = "sine", vol = .05, slide = 0) {
     if (!SJ.state.sound) return;
     try {
@@ -28,7 +28,7 @@
       g.gain.linearRampToValueAtTime(vol, t + .012);
       g.gain.exponentialRampToValueAtTime(.0001, t + dur);
       o.connect(g); g.connect(audio.destination); o.start(t); o.stop(t + dur + .02);
-    } catch (e) { /* audio niet beschikbaar */ }
+    } catch (e) {  }
   }
   const sfx = {
     jump:   () => { tone(380, .13, 0, "triangle", .05, 260); },
@@ -131,7 +131,7 @@
     menu();
   }
 
-  /* ---场面 elementen (eens per sessie gegenereerd)--- */
+  
   let skyline = [], clouds = [];
   function makeScenery() {
     skyline = Array.from({ length: 42 }, (_, i) => ({ x: i * 48, w: rand(28, 54), h: rand(24, 105), lit: Math.random() < .55 }));
@@ -162,7 +162,7 @@
     sfx.power();
   }
 
-  /* --- invoer --- */
+  
   function move(d) { if (running && !paused) { S.lane = clamp(S.lane + d, 0, 2); tone(560, .04, 0, "sine", .018); } }
   function jump() { if (running && !paused && S.jz === 0) { S.vz = 660; sfx.jump(); } }
   function onKey(e) {
@@ -193,7 +193,7 @@
     clearTimeout(msgT); msgT = setTimeout(() => { if (m) m.style.display = "none"; }, ms);
   }
 
-  /* --- spawnen --- */
+  
   function spawnRow() {
     const two = S.t > 22 && Math.random() < .4;
     const blocked = shuffle([0, 1, 2]).slice(0, two ? 2 : 1);
@@ -210,7 +210,7 @@
     if (!q) { S.qt = 18; return; }
     const wrong = shuffle(q.answers.filter((_, i) => i !== q.correct)).slice(0, 2);
     const opts = shuffle([{ t: q.answers[q.correct], ok: true }, ...wrong.map(t => ({ t, ok: false }))]);
-    // Vaste 7 seconden van spawn tot antwoord, ongeacht de loopsnelheid.
+    
     S.gate = { z: GATE_Z, speed: (GATE_Z - 14) / 7, opts, q, done: false, pick: -1 };
     msg(`<span class="rn-qhead">KIES JE STROOK</span><b>${q.question}</b>
       <div class="rn-opts">${opts.map((o, i) => `<span class="rn-opt"><b>${"ABC"[i]}</b>${o.t}</span>`).join("")}</div>`, 7200);
@@ -225,7 +225,7 @@
   };
   const label = (text, x, y, color = "#f4c542", size = 18) => S.labels.push({ text, x, y, color, size, life: 1.15 });
 
-  /* --- spelregels --- */
+  
   function hurt() {
     if (S.inv > 0) return;
     if (S.shield) { S.shield = 0; S.inv = 1; msg(SJ.ico("shield-2") + " Schild gebroken!"); burst(CX, GROUND - 40, "#5fd0e0", 18); sfx.power(); return; }
@@ -341,7 +341,7 @@
     $("#again").onclick = begin; $("#home").onclick = () => SJ.home();
   }
 
-  /* --- tekenen --- */
+  
   function rr(x, y, w, h, r) {
     r = Math.max(0, Math.min(r, w / 2, h / 2));
     c.beginPath();
@@ -357,7 +357,7 @@
     }
     c.closePath();
   }
-  /* Iconen in de canvas worden als lijnen getekend, niet als tekstglyfen. */
+  
   function crossMark(x, y, r, color, w) {
     c.strokeStyle = color; c.lineWidth = w; c.lineCap = "round";
     c.beginPath(); c.moveTo(x, y - r); c.lineTo(x, y + r);
@@ -407,7 +407,7 @@
       c.ellipse(x + 24 * cl.s, cl.y + 3 * cl.s, 28 * cl.s, 9 * cl.s, 0, 0, 7);
       c.ellipse(x - 22 * cl.s, cl.y + 4 * cl.s, 26 * cl.s, 8 * cl.s, 0, 0, 7); c.fill();
     }
-    // skyline: twee parallax-lagen
+    
     const total = skyline.length * 48;
     [[.012, "rgba(21,60,107,.28)", HORIZON + 12, false], [.03, "rgba(13,41,75,.55)", HORIZON + 8, true]].forEach(([f, col, base, lit]) => {
       const off = (S.dist * f) % total;
@@ -439,7 +439,7 @@
     c.moveTo(PX(-1.55, zF), PY(zF)); c.lineTo(PX(1.55, zF), PY(zF));
     c.lineTo(PX(1.72, zN), PY(zN)); c.lineTo(PX(-1.72, zN), PY(zN)); c.closePath(); c.fill();
 
-    // dwarsliggers bewegen naar de speler (z wordt kleiner), niet naar de horizon
+    
     const sp = 84, off = -(S.dist % sp);
     for (let z = -84 + off; z < zF; z += sp) {
       const y = PY(z), th = Math.max(1.5, 9 * K(z));
@@ -461,7 +461,7 @@
         c.beginPath(); c.moveTo(PX(coord, zF), PY(zF)); c.lineTo(PX(coord, zN), PY(zN)); c.stroke();
       }
     }
-    // speed lines
+    
     const vm = Math.min(1, Math.max(0, Math.min(S.t * 1.8, 105) / 105));
     if (!reduce && vm > .08) for (let i = 0; i < 12; i++) {
       const seed = i * 977 + Math.floor(S.dist / 38) * 131;
@@ -557,7 +557,7 @@
       }
       rr(x - w / 2, top, w, h, 10 * s); c.fillStyle = bg; c.fill();
       c.strokeStyle = border; c.lineWidth = Math.max(2, 3 * s); c.stroke();
-      // Alleen A / B / C op het speelveld — de tekst staat in de toast.
+      
       c.fillStyle = border; c.font = `700 ${Math.max(18, 34 * s)}px "Space Grotesk",sans-serif`;
       c.textAlign = "center"; c.textBaseline = "middle";
       c.fillText("ABC"[i], x, top + h * .5);
@@ -573,7 +573,7 @@
     const lean = air ? -.09 : Math.sin(cycle) * .03 + S.vx * .012;
     const sc = 1.2, sq = S.squash || 0;
 
-    // schaduw op de grond
+    
     const sh = clamp(1 - S.jz / 170, .4, 1);
     c.fillStyle = `rgba(12,34,60,${.24 * sh})`;
     c.beginPath(); c.ellipse(x, GROUND + 4, 23 * sh, 9 * sh, 0, 0, 7); c.fill();
@@ -589,7 +589,7 @@
     c.save(); c.translate(x, y - bob);
     c.scale(sc * (1 + sq * .4), sc * (1 - sq * .4)); c.rotate(lean);
 
-    // benen met kniebuiging
+    
     [-1, 1].forEach(phase => {
       const hx = phase * 7, hy = -26;
       let kx, ky, fx, fy, tilt;
@@ -610,7 +610,7 @@
       c.fillStyle = "#f4c542"; rr(-6, -3, 14, 7, 3); c.fill(); c.restore();
     });
 
-    // armen (tegenovergestelde zwaai)
+    
     [-1, 1].forEach(phase => {
       const sx = phase * 15, sy = -48;
       let hx, hy, ex, ey;
@@ -625,7 +625,7 @@
       c.fillStyle = "#e8b58f"; c.beginPath(); c.arc(ex, ey, 4.5, 0, 7); c.fill();
     });
 
-    // romp + rugzak
+    
     const bg = c.createLinearGradient(-16, -56, 16, -20);
     bg.addColorStop(0, "#57a38c"); bg.addColorStop(1, "#1b5b4c");
     rr(-16, -56, 32, 34, 11); c.fillStyle = bg; c.fill();
@@ -633,13 +633,13 @@
     c.fillStyle = "#153c6b"; rr(-21, -51, 8, 21, 4), c.fill();
     c.fillRect(-16, -27, 32, 4);
 
-    // sjaal met wapperende punt
+    
     c.fillStyle = "#f4c542"; rr(-17, -56, 34, 7, 3.5), c.fill();
     const flap = Math.sin(S.t * 10) * 4;
     c.beginPath(); c.moveTo(10, -54); c.quadraticCurveTo(25 + flap, -48, 21 + flap, -39);
     c.lineTo(8, -49); c.closePath(); c.fill();
 
-    // hoofd
+    
     c.fillStyle = "#e8b58f"; c.beginPath(); c.arc(0, -70, 13, 0, 7); c.fill();
     c.fillStyle = "#dca47d"; c.beginPath(); c.arc(12, -69, 3, 0, 7); c.fill();
     c.fillStyle = "#153c6b"; c.beginPath(); c.arc(0, -72, 13.5, Math.PI, 0); c.fill();
@@ -649,7 +649,7 @@
     c.strokeStyle = "#a86b50"; c.lineWidth = 1.5; c.beginPath(); c.arc(0, -65, 4, .2, Math.PI - .2); c.stroke();
     c.restore();
 
-    // schild / bonusrand over het personage heen
+    
     if (S.shield) {
       c.strokeStyle = "rgba(95,208,224,.9)"; c.lineWidth = 3;
       c.fillStyle = "rgba(150,235,245,.1)";
